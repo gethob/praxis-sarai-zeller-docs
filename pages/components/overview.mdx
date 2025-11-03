@@ -1,0 +1,331 @@
+# Components Overview
+
+The Praxis Sarai Zeller website is built with reusable, well-structured Vue.js components. Each component is designed to be maintainable, accessible, and performant.
+
+## Component Categories
+
+### Navigation Components
+
+Located in `src/components/Navigation/`
+
+- **[Header](/components/header)** - Main navigation with mobile menu
+- **[Footer](/components/footer)** - Site footer with links and contact info
+
+### UI Components
+
+Located in `src/components/Cards/`, `src/components/Forms/`, etc.
+
+- **[ServiceCard](/components/service-card)** - Clickable card for services
+- **[ContactForm](/components/contact-form)** - Contact form with validation
+- **[CredentialsTimeline](/components/timeline)** - Timeline for credentials
+- **[ImageGallery](/components/gallery)** - Photo gallery with lightbox
+
+### Page Components
+
+Located in `src/views/`
+
+Full-page components that represent routes:
+- Home, Therapeutin, Therapien, Facilities
+- Appointments, Contact, Emergency, Directions
+- Legal, Privacy
+
+## Component Structure
+
+All components follow a consistent structure:
+
+```vue
+<script setup>
+// 1. Imports
+import { ref, computed } from 'vue'
+import SomeComponent from '@/components/SomeComponent.vue'
+
+// 2. Props
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
+  }
+})
+
+// 3. Emits
+const emit = defineEmits(['action'])
+
+// 4. Reactive State
+const isActive = ref(false)
+
+// 5. Computed Properties
+const displayTitle = computed(() => props.title.toUpperCase())
+
+// 6. Methods
+const handleClick = () => {
+  isActive.value = !isActive.value
+  emit('action', isActive.value)
+}
+
+// 7. Lifecycle Hooks (if needed)
+onMounted(() => {
+  console.log('Component mounted')
+})
+</script>
+
+<template>
+  <!-- Component template -->
+  <div class="component">
+    <h2>{{ displayTitle }}</h2>
+    <button @click="handleClick">Toggle</button>
+  </div>
+</template>
+
+<style scoped>
+/* Scoped styles using design system variables */
+.component {
+  padding: var(--spacing-4);
+  background-color: var(--color-white);
+}
+</style>
+```
+
+## Design Principles
+
+### 1. Single Responsibility
+
+Each component has a clear, focused purpose:
+
+```vue
+<!-- ✅ Good: Focused component -->
+<ServiceCard title="Therapy" description="..." link="/therapy" />
+
+<!-- ❌ Bad: Component doing too much -->
+<ServiceSection>
+  <!-- Too many responsibilities -->
+</ServiceSection>
+```
+
+### 2. Composition Over Inheritance
+
+Build complex UIs by composing simple components:
+
+```vue
+<template>
+  <div class="page">
+    <ServiceCard v-for="service in services" :key="service.id" v-bind="service" />
+  </div>
+</template>
+```
+
+### 3. Props for Configuration
+
+Use props to make components reusable:
+
+```vue
+<script setup>
+defineProps({
+  variant: {
+    type: String,
+    default: 'primary',
+    validator: (value) => ['primary', 'secondary', 'emergency'].includes(value)
+  }
+})
+</script>
+```
+
+### 4. Emit Events for Actions
+
+Use events for parent-child communication:
+
+```vue
+<script setup>
+const emit = defineEmits(['submit', 'cancel'])
+
+const handleSubmit = (data) => {
+  emit('submit', data)
+}
+</script>
+```
+
+### 5. Accessible by Default
+
+All components implement accessibility features:
+
+- Semantic HTML
+- ARIA labels where needed
+- Keyboard navigation support
+- Focus management
+
+```vue
+<template>
+  <button
+    @click="handleClick"
+    :aria-label="ariaLabel"
+    :aria-expanded="isOpen"
+  >
+    {{ label }}
+  </button>
+</template>
+```
+
+## Styling Approach
+
+### Scoped Styles
+
+Components use scoped styles to avoid conflicts:
+
+```vue
+<style scoped>
+.my-component {
+  /* Only affects this component */
+  color: var(--color-primary);
+}
+</style>
+```
+
+### Design System Variables
+
+Use CSS variables from the design system:
+
+```css
+/* Colors */
+var(--color-primary)
+var(--color-text-primary)
+var(--color-background)
+
+/* Spacing */
+var(--spacing-4)
+var(--spacing-8)
+
+/* Typography */
+var(--font-size-base)
+var(--font-weight-medium)
+
+/* Transitions */
+var(--transition-base)
+```
+
+### Responsive Design
+
+Mobile-first responsive styles:
+
+```css
+.component {
+  /* Mobile styles (default) */
+  padding: var(--spacing-4);
+}
+
+@media (min-width: 768px) {
+  /* Tablet styles */
+  .component {
+    padding: var(--spacing-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop styles */
+  .component {
+    padding: var(--spacing-8);
+  }
+}
+```
+
+## Component Communication
+
+### Parent to Child (Props)
+
+```vue
+<!-- Parent -->
+<ChildComponent :data="parentData" :isActive="true" />
+
+<!-- Child -->
+<script setup>
+const props = defineProps({
+  data: Object,
+  isActive: Boolean
+})
+</script>
+```
+
+### Child to Parent (Events)
+
+```vue
+<!-- Child -->
+<script setup>
+const emit = defineEmits(['update'])
+emit('update', newValue)
+</script>
+
+<!-- Parent -->
+<ChildComponent @update="handleUpdate" />
+```
+
+### Sibling Communication
+
+Use a shared parent:
+
+```vue
+<!-- Parent manages state -->
+<script setup>
+const sharedState = ref('data')
+</script>
+
+<template>
+  <ChildA :state="sharedState" @update="sharedState = $event" />
+  <ChildB :state="sharedState" />
+</template>
+```
+
+## Component Testing
+
+While the project doesn't include tests by default, here's the recommended approach:
+
+```javascript
+import { mount } from '@vue/test-utils'
+import ServiceCard from '@/components/Cards/ServiceCard.vue'
+
+describe('ServiceCard', () => {
+  it('renders title prop', () => {
+    const wrapper = mount(ServiceCard, {
+      props: {
+        title: 'Test Title',
+        description: 'Test description',
+        link: '/test'
+      }
+    })
+    expect(wrapper.text()).toContain('Test Title')
+  })
+
+  it('emits click event', async () => {
+    const wrapper = mount(ServiceCard, { /* props */ })
+    await wrapper.find('.service-card').trigger('click')
+    expect(wrapper.emitted('click')).toBeTruthy()
+  })
+})
+```
+
+## Best Practices
+
+### ✅ Do
+
+- Keep components small and focused
+- Use meaningful prop and variable names
+- Document complex logic with comments
+- Handle all prop types and validation
+- Implement proper error handling
+- Use semantic HTML
+- Add accessibility attributes
+
+### ❌ Don't
+
+- Create overly complex components
+- Manipulate props directly
+- Use inline styles (use CSS instead)
+- Forget to handle edge cases
+- Ignore accessibility
+- Skip prop validation
+
+## Next Steps
+
+Explore individual component documentation:
+
+- [Header Component](/components/header)
+- [Footer Component](/components/footer)
+- [Service Card Component](/components/service-card)
+- [Contact Form Component](/components/contact-form)

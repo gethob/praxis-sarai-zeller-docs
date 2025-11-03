@@ -1,0 +1,538 @@
+# Image Gallery Component
+
+A responsive image gallery component with lightbox functionality for displaying practice photos and facility images.
+
+## Location
+
+`site/src/components/Common/Gallery.vue`
+
+## Features
+
+- Responsive grid layout
+- Lightbox/modal view for full-size images
+- Keyboard navigation (arrow keys, Escape)
+- Touch gesture support
+- Image lazy loading
+- Caption support
+- Thumbnail optimization
+- Accessible markup
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `images` | `Array<GalleryImage>` | Yes | `[]` | Array of gallery images |
+| `columns` | `Number` | No | `3` | Number of columns (desktop) |
+| `gap` | `Number` | No | `16` | Gap between images in pixels |
+| `showCaptions` | `Boolean` | No | `true` | Show image captions |
+
+### GalleryImage Structure
+
+```typescript
+interface GalleryImage {
+  id: string | number
+  src: string              // Full-size image URL
+  thumbnail?: string       // Optional thumbnail URL
+  alt: string             // Alt text for accessibility
+  caption?: string        // Optional caption
+  width?: number          // Optional: for aspect ratio
+  height?: number         // Optional: for aspect ratio
+}
+```
+
+## Usage
+
+### Basic Usage
+
+```vue
+<template>
+  <Gallery :images="galleryImages" />
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import Gallery from '@/components/Common/Gallery.vue'
+
+const galleryImages = ref([
+  {
+    id: 1,
+    src: '/images/practice/room-1.jpg',
+    alt: 'Therapieraum 1',
+    caption: 'Heller, freundlicher Therapieraum'
+  },
+  {
+    id: 2,
+    src: '/images/practice/room-2.jpg',
+    alt: 'Therapieraum 2',
+    caption: 'Spieltherapieraum für Kinder'
+  },
+  {
+    id: 3,
+    src: '/images/practice/waiting-room.jpg',
+    alt: 'Wartebereich',
+    caption: 'Gemütlicher Wartebereich'
+  }
+])
+</script>
+```
+
+### With Thumbnails
+
+```vue
+<script setup>
+const galleryImages = ref([
+  {
+    id: 1,
+    src: '/images/practice/room-1.jpg',
+    thumbnail: '/images/practice/thumbs/room-1-thumb.jpg',
+    alt: 'Therapieraum 1',
+    caption: 'Therapieraum'
+  }
+])
+</script>
+```
+
+### Custom Grid Layout
+
+```vue
+<Gallery
+  :images="galleryImages"
+  :columns="4"
+  :gap="24"
+  :show-captions="false"
+/>
+```
+
+## Component Code
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+
+const props = defineProps({
+  images: {
+    type: Array,
+    required: true,
+    default: () => []
+  },
+  columns: {
+    type: Number,
+    default: 3
+  },
+  gap: {
+    type: Number,
+    default: 16
+  },
+  showCaptions: {
+    type: Boolean,
+    default: true
+  }
+})
+
+const currentImageIndex = ref(null)
+const isLightboxOpen = ref(false)
+
+const currentImage = computed(() => {
+  if (currentImageIndex.value === null) return null
+  return props.images[currentImageIndex.value]
+})
+
+const openLightbox = (index) => {
+  currentImageIndex.value = index
+  isLightboxOpen.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+const closeLightbox = () => {
+  isLightboxOpen.value = false
+  currentImageIndex.value = null
+  document.body.style.overflow = ''
+}
+
+const nextImage = () => {
+  if (currentImageIndex.value < props.images.length - 1) {
+    currentImageIndex.value++
+  } else {
+    currentImageIndex.value = 0 // Loop to start
+  }
+}
+
+const previousImage = () => {
+  if (currentImageIndex.value > 0) {
+    currentImageIndex.value--
+  } else {
+    currentImageIndex.value = props.images.length - 1 // Loop to end
+  }
+}
+
+const handleKeydown = (event) => {
+  if (!isLightboxOpen.value) return
+
+  if (event.key === 'Escape') {
+    closeLightbox()
+  } else if (event.key === 'ArrowRight') {
+    nextImage()
+  } else if (event.key === 'ArrowLeft') {
+    previousImage()
+  }
+}
+
+// Lifecycle
+import { onMounted, onUnmounted } from 'vue'
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+  document.body.style.overflow = ''
+})
+</script>
+
+<template>
+  <div class="gallery" :style="{ gap: `${gap}px` }">
+    <div
+      v-for="(image, index) in images"
+      :key="image.id"
+      class="gallery-item"
+      @click="openLightbox(index)"
+    >
+      <img
+        :src="image.thumbnail || image.src"
+        :alt="image.alt"
+        class="gallery-image"
+        loading="lazy"
+      />
+      <div v-if="showCaptions && image.caption" class="gallery-caption">
+        {{ image.caption }}
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <Teleport to="body">
+      <Transition name="lightbox">
+        <div
+          v-if="isLightboxOpen"
+          class="lightbox"
+          @click="closeLightbox"
+        >
+          <button
+            class="lightbox-close"
+            @click="closeLightbox"
+            aria-label="Close lightbox"
+          >
+            ×
+          </button>
+
+          <button
+            class="lightbox-prev"
+            @click.stop="previousImage"
+            aria-label="Previous image"
+          >
+            ‹
+          </button>
+
+          <button
+            class="lightbox-next"
+            @click.stop="nextImage"
+            aria-label="Next image"
+          >
+            ›
+          </button>
+
+          <div class="lightbox-content" @click.stop>
+            <img
+              :src="currentImage.src"
+              :alt="currentImage.alt"
+              class="lightbox-image"
+            />
+            <div v-if="currentImage.caption" class="lightbox-caption">
+              {{ currentImage.caption }}
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+  </div>
+</template>
+```
+
+## Styling
+
+```css
+/* Gallery Grid */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-4);
+}
+
+/* Gallery Item */
+.gallery-item {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-base);
+}
+
+.gallery-item:hover {
+  transform: scale(1.02);
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+  display: block;
+}
+
+.gallery-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-3);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7),
+    transparent
+  );
+  color: white;
+  font-size: var(--text-sm);
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: var(--spacing-6);
+}
+
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.lightbox-caption {
+  color: white;
+  margin-top: var(--spacing-4);
+  text-align: center;
+  font-size: var(--text-base);
+}
+
+/* Lightbox Controls */
+.lightbox-close,
+.lightbox-prev,
+.lightbox-next {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 40px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-close {
+  top: var(--spacing-4);
+  right: var(--spacing-4);
+}
+
+.lightbox-prev {
+  left: var(--spacing-4);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox-next {
+  right: var(--spacing-4);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox-close:hover,
+.lightbox-prev:hover,
+.lightbox-next:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Lightbox Transitions */
+.lightbox-enter-active,
+.lightbox-leave-active {
+  transition: opacity var(--transition-base);
+}
+
+.lightbox-enter-from,
+.lightbox-leave-to {
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .gallery {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .gallery {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-2);
+  }
+
+  .lightbox-prev,
+  .lightbox-next {
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+  }
+}
+```
+
+## Features
+
+### Lazy Loading
+
+Images use native lazy loading:
+
+```vue
+<img
+  :src="image.src"
+  :alt="image.alt"
+  loading="lazy"
+/>
+```
+
+### Keyboard Navigation
+
+- **Escape**: Close lightbox
+- **Arrow Right**: Next image
+- **Arrow Left**: Previous image
+
+### Touch Gestures
+
+Add swipe support:
+
+```javascript
+import { ref } from 'vue'
+
+const touchStartX = ref(0)
+const touchEndX = ref(0)
+
+const handleTouchStart = (e) => {
+  touchStartX.value = e.changedTouches[0].screenX
+}
+
+const handleTouchEnd = (e) => {
+  touchEndX.value = e.changedTouches[0].screenX
+  handleSwipe()
+}
+
+const handleSwipe = () => {
+  const diff = touchStartX.value - touchEndX.value
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) {
+      nextImage() // Swipe left
+    } else {
+      previousImage() // Swipe right
+    }
+  }
+}
+```
+
+## Accessibility
+
+### ARIA Labels
+
+```vue
+<div
+  class="gallery-item"
+  role="button"
+  tabindex="0"
+  :aria-label="`View ${image.alt}`"
+  @click="openLightbox(index)"
+  @keydown.enter="openLightbox(index)"
+>
+  <img :src="image.src" :alt="image.alt" />
+</div>
+```
+
+### Focus Management
+
+```javascript
+const openLightbox = (index) => {
+  currentImageIndex.value = index
+  isLightboxOpen.value = true
+
+  // Focus close button
+  nextTick(() => {
+    document.querySelector('.lightbox-close')?.focus()
+  })
+}
+```
+
+## Best Practices
+
+1. **Optimize Images**: Use properly sized thumbnails and full images
+2. **Alt Text**: Always provide descriptive alt text
+3. **Performance**: Implement lazy loading for large galleries
+4. **Accessibility**: Support keyboard navigation
+5. **Mobile**: Ensure touch-friendly controls
+
+## Advanced Features
+
+### Image Counter
+
+```vue
+<div class="lightbox-counter">
+  {{ currentImageIndex + 1 }} / {{ images.length }}
+</div>
+```
+
+### Fullscreen API
+
+```javascript
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+  } else {
+    document.exitFullscreen()
+  }
+}
+```
+
+## Related Components
+
+- [Timeline](/components/timeline) - For displaying chronological events
+
+## Related Pages
+
+- [Component Architecture](/architecture/components)
+- [Design System](/architecture/design-system)

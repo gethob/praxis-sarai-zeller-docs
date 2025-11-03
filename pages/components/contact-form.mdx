@@ -1,0 +1,474 @@
+# Contact Form Component
+
+A comprehensive contact form component with validation and user feedback.
+
+## Location
+
+`site/src/components/Common/ContactForm.vue`
+
+## Features
+
+- Client-side form validation
+- Required field validation
+- Email format validation
+- Textarea with character counter (optional)
+- Loading state during submission
+- Success/error feedback
+- Accessible form labels and errors
+- Responsive design
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `showPhone` | `Boolean` | No | `false` | Show optional phone field |
+| `showSubject` | `Boolean` | No | `true` | Show subject field |
+| `submitButtonText` | `String` | No | `'Absenden'` | Submit button label |
+
+## Usage
+
+### Basic Usage
+
+```vue
+<template>
+  <ContactForm @submit="handleFormSubmit" />
+</template>
+
+<script setup>
+import ContactForm from '@/components/Common/ContactForm.vue'
+
+const handleFormSubmit = (formData) => {
+  console.log('Form submitted:', formData)
+  // Handle form submission (API call, etc.)
+}
+</script>
+```
+
+### With All Fields
+
+```vue
+<ContactForm
+  :show-phone="true"
+  :show-subject="true"
+  submit-button-text="Nachricht senden"
+  @submit="handleFormSubmit"
+/>
+```
+
+## Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `submit` | `FormData` | Emitted when form is successfully validated and submitted |
+
+### Form Data Structure
+
+```typescript
+interface FormData {
+  name: string
+  email: string
+  phone?: string      // If showPhone is true
+  subject?: string    // If showSubject is true
+  message: string
+}
+```
+
+## Component Code
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+
+const props = defineProps({
+  showPhone: {
+    type: Boolean,
+    default: false
+  },
+  showSubject: {
+    type: Boolean,
+    default: true
+  },
+  submitButtonText: {
+    type: String,
+    default: 'Absenden'
+  }
+})
+
+const emit = defineEmits(['submit'])
+
+const formData = ref({
+  name: '',
+  email: '',
+  phone: '',
+  subject: '',
+  message: ''
+})
+
+const errors = ref({})
+const isSubmitting = ref(false)
+const submitStatus = ref(null) // 'success' | 'error' | null
+
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return re.test(email)
+}
+
+const validateForm = () => {
+  errors.value = {}
+
+  if (!formData.value.name.trim()) {
+    errors.value.name = 'Bitte geben Sie Ihren Namen ein'
+  }
+
+  if (!formData.value.email.trim()) {
+    errors.value.email = 'Bitte geben Sie Ihre E-Mail-Adresse ein'
+  } else if (!validateEmail(formData.value.email)) {
+    errors.value.email = 'Bitte geben Sie eine gültige E-Mail-Adresse ein'
+  }
+
+  if (!formData.value.message.trim()) {
+    errors.value.message = 'Bitte geben Sie eine Nachricht ein'
+  }
+
+  return Object.keys(errors.value).length === 0
+}
+
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return
+  }
+
+  isSubmitting.value = true
+  submitStatus.value = null
+
+  try {
+    // Emit form data to parent
+    emit('submit', { ...formData.value })
+
+    // Reset form on success
+    formData.value = {
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: ''
+    }
+
+    submitStatus.value = 'success'
+  } catch (error) {
+    submitStatus.value = 'error'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
+<template>
+  <form @submit.prevent="handleSubmit" class="contact-form">
+    <!-- Name Field -->
+    <div class="form-group">
+      <label for="name" class="form-label">
+        Name <span class="required">*</span>
+      </label>
+      <input
+        id="name"
+        v-model="formData.name"
+        type="text"
+        class="form-input"
+        :class="{ 'error': errors.name }"
+        required
+      />
+      <span v-if="errors.name" class="error-message">
+        {{ errors.name }}
+      </span>
+    </div>
+
+    <!-- Email Field -->
+    <div class="form-group">
+      <label for="email" class="form-label">
+        E-Mail <span class="required">*</span>
+      </label>
+      <input
+        id="email"
+        v-model="formData.email"
+        type="email"
+        class="form-input"
+        :class="{ 'error': errors.email }"
+        required
+      />
+      <span v-if="errors.email" class="error-message">
+        {{ errors.email }}
+      </span>
+    </div>
+
+    <!-- Phone Field (Optional) -->
+    <div v-if="showPhone" class="form-group">
+      <label for="phone" class="form-label">Telefon</label>
+      <input
+        id="phone"
+        v-model="formData.phone"
+        type="tel"
+        class="form-input"
+      />
+    </div>
+
+    <!-- Subject Field (Optional) -->
+    <div v-if="showSubject" class="form-group">
+      <label for="subject" class="form-label">Betreff</label>
+      <input
+        id="subject"
+        v-model="formData.subject"
+        type="text"
+        class="form-input"
+      />
+    </div>
+
+    <!-- Message Field -->
+    <div class="form-group">
+      <label for="message" class="form-label">
+        Nachricht <span class="required">*</span>
+      </label>
+      <textarea
+        id="message"
+        v-model="formData.message"
+        class="form-input form-textarea"
+        :class="{ 'error': errors.message }"
+        rows="5"
+        required
+      />
+      <span v-if="errors.message" class="error-message">
+        {{ errors.message }}
+      </span>
+    </div>
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      class="btn btn-primary"
+      :disabled="isSubmitting"
+    >
+      <span v-if="!isSubmitting">{{ submitButtonText }}</span>
+      <span v-else>Wird gesendet...</span>
+    </button>
+
+    <!-- Success Message -->
+    <div v-if="submitStatus === 'success'" class="alert alert-success">
+      Vielen Dank! Ihre Nachricht wurde erfolgreich gesendet.
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="submitStatus === 'error'" class="alert alert-error">
+      Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.
+    </div>
+  </form>
+</template>
+```
+
+## Styling
+
+```css
+.contact-form {
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.form-label {
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.form-label .required {
+  color: var(--color-error);
+}
+
+.form-input {
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  transition: border-color var(--transition-base);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(217, 74, 56, 0.1);
+}
+
+.form-input.error {
+  border-color: var(--color-error);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 120px;
+  font-family: var(--font-primary);
+}
+
+.error-message {
+  color: var(--color-error);
+  font-size: var(--text-sm);
+  margin-top: var(--spacing-1);
+}
+
+.btn {
+  padding: var(--spacing-3) var(--spacing-6);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-accent);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.alert {
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  margin-top: var(--spacing-4);
+}
+
+.alert-success {
+  background-color: #F0FFF4;
+  color: #22543D;
+  border: 1px solid #9AE6B4;
+}
+
+.alert-error {
+  background-color: #FFF5F5;
+  color: #742A2A;
+  border: 1px solid #FC8181;
+}
+```
+
+## Validation
+
+### Email Validation
+
+```javascript
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return re.test(email)
+}
+```
+
+### Phone Validation (Optional)
+
+```javascript
+const validatePhone = (phone) => {
+  const re = /^[\d\s\-+()]+$/
+  return re.test(phone) && phone.replace(/\D/g, '').length >= 10
+}
+```
+
+### Custom Validation Rules
+
+```javascript
+const validateForm = () => {
+  errors.value = {}
+
+  // Name validation
+  if (!formData.value.name.trim()) {
+    errors.value.name = 'Name ist erforderlich'
+  } else if (formData.value.name.length < 2) {
+    errors.value.name = 'Name muss mindestens 2 Zeichen lang sein'
+  }
+
+  // Email validation
+  if (!formData.value.email.trim()) {
+    errors.value.email = 'E-Mail ist erforderlich'
+  } else if (!validateEmail(formData.value.email)) {
+    errors.value.email = 'Ungültige E-Mail-Adresse'
+  }
+
+  // Message validation
+  if (!formData.value.message.trim()) {
+    errors.value.message = 'Nachricht ist erforderlich'
+  } else if (formData.value.message.length < 10) {
+    errors.value.message = 'Nachricht muss mindestens 10 Zeichen lang sein'
+  }
+
+  return Object.keys(errors.value).length === 0
+}
+```
+
+## Accessibility
+
+### Labels and ARIA
+
+```vue
+<label for="name" class="form-label">
+  Name <span class="required" aria-label="required">*</span>
+</label>
+<input
+  id="name"
+  v-model="formData.name"
+  type="text"
+  :aria-invalid="!!errors.name"
+  :aria-describedby="errors.name ? 'name-error' : undefined"
+/>
+<span v-if="errors.name" id="name-error" class="error-message" role="alert">
+  {{ errors.name }}
+</span>
+```
+
+### Focus Management
+
+```javascript
+import { ref, nextTick } from 'vue'
+
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    // Focus first error field
+    await nextTick()
+    const firstErrorField = document.querySelector('.form-input.error')
+    firstErrorField?.focus()
+    return
+  }
+
+  // Submit form...
+}
+```
+
+## Best Practices
+
+1. **Always Validate**: Never trust client-side validation alone - validate on server too
+2. **Clear Errors**: Clear validation errors when user starts typing
+3. **Helpful Messages**: Provide specific, actionable error messages
+4. **Loading States**: Show loading state during async submission
+5. **Success Feedback**: Always confirm successful submission to user
+
+## Related Components
+
+- [Service Card](/components/service-card) - For displaying services
+
+## Related Pages
+
+- [Component Architecture](/architecture/components)
+- [Design System](/architecture/design-system)

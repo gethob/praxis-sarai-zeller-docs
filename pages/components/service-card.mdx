@@ -1,0 +1,447 @@
+# Service Card Component
+
+A reusable card component for displaying therapy services and offerings.
+
+## Location
+
+`site/src/components/Common/ServiceCard.vue`
+
+## Features
+
+- Clean card design with hover effects
+- Icon support
+- Title and description display
+- Responsive layout
+- Optional link/action support
+- Accessible markup
+
+## Props
+
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `title` | `String` | Yes | - | Service title |
+| `description` | `String` | Yes | - | Service description |
+| `icon` | `String` | No | `undefined` | Icon image URL or path |
+| `link` | `String` | No | `undefined` | Optional link destination |
+
+## Usage
+
+### Basic Usage
+
+```vue
+<template>
+  <ServiceCard
+    title="Verhaltenstherapie"
+    description="Evidenzbasierte Verhaltenstherapie für Kinder und Jugendliche."
+  />
+</template>
+
+<script setup>
+import ServiceCard from '@/components/Common/ServiceCard.vue'
+</script>
+```
+
+### With Icon
+
+```vue
+<ServiceCard
+  title="Verhaltenstherapie"
+  description="Evidenzbasierte Verhaltenstherapie..."
+  icon="/images/icons/therapy.svg"
+/>
+```
+
+### With Link
+
+```vue
+<ServiceCard
+  title="Mehr erfahren"
+  description="Informationen über unsere Therapieangebote"
+  link="/therapien"
+/>
+```
+
+### Multiple Cards
+
+```vue
+<template>
+  <div class="services-grid">
+    <ServiceCard
+      v-for="service in services"
+      :key="service.id"
+      :title="service.title"
+      :description="service.description"
+      :icon="service.icon"
+    />
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import ServiceCard from '@/components/Common/ServiceCard.vue'
+
+const services = ref([
+  {
+    id: 1,
+    title: 'Verhaltenstherapie',
+    description: 'Evidenzbasierte Therapie...',
+    icon: '/images/therapy.svg'
+  },
+  {
+    id: 2,
+    title: 'Familientherapie',
+    description: 'Unterstützung für Familien...',
+    icon: '/images/family.svg'
+  }
+])
+</script>
+
+<style scoped>
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-6);
+}
+</style>
+```
+
+## Component Code
+
+```vue
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  icon: {
+    type: String,
+    default: undefined
+  },
+  link: {
+    type: String,
+    default: undefined
+  }
+})
+
+const emit = defineEmits(['click'])
+
+const handleClick = () => {
+  emit('click')
+}
+
+const isLink = computed(() => !!props.link)
+</script>
+
+<template>
+  <component
+    :is="isLink ? 'router-link' : 'article'"
+    :to="link"
+    class="service-card"
+    @click="handleClick"
+  >
+    <div v-if="icon" class="service-icon">
+      <img :src="icon" :alt="title" />
+    </div>
+
+    <h3 class="service-title">{{ title }}</h3>
+
+    <p class="service-description">{{ description }}</p>
+  </component>
+</template>
+```
+
+## Styling
+
+```css
+.service-card {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  text-decoration: none;
+  color: inherit;
+}
+
+.service-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+}
+
+.service-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.service-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.service-description {
+  font-size: var(--text-base);
+  color: var(--color-text-light);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+/* Link variant */
+a.service-card:hover .service-title {
+  color: var(--color-primary);
+}
+```
+
+## Variants
+
+### Featured Card
+
+```vue
+<template>
+  <article class="service-card featured">
+    <div class="featured-badge">Featured</div>
+    <!-- Rest of card content -->
+  </article>
+</template>
+
+<style scoped>
+.service-card.featured {
+  border: 2px solid var(--color-primary);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg) 0%,
+    var(--color-bg-alt) 100%
+  );
+}
+
+.featured-badge {
+  position: absolute;
+  top: var(--spacing-4);
+  right: var(--spacing-4);
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+</style>
+```
+
+### Compact Card
+
+```css
+.service-card.compact {
+  padding: var(--spacing-4);
+  gap: var(--spacing-2);
+}
+
+.service-card.compact .service-title {
+  font-size: var(--text-lg);
+}
+
+.service-card.compact .service-description {
+  font-size: var(--text-sm);
+}
+```
+
+## Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `click` | - | Emitted when card is clicked |
+
+### Example with Events
+
+```vue
+<template>
+  <ServiceCard
+    title="Service"
+    description="Description"
+    @click="handleServiceClick"
+  />
+</template>
+
+<script setup>
+const handleServiceClick = () => {
+  console.log('Service card clicked')
+  // Track analytics, show modal, etc.
+}
+</script>
+```
+
+## Accessibility
+
+### Semantic HTML
+
+```vue
+<article
+  class="service-card"
+  role="article"
+  tabindex="0"
+>
+  <!-- Content -->
+</article>
+```
+
+### ARIA Labels
+
+```vue
+<router-link
+  :to="link"
+  class="service-card"
+  :aria-label="`Learn more about ${title}`"
+>
+  <!-- Content -->
+</router-link>
+```
+
+### Keyboard Support
+
+```css
+.service-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+```
+
+## Responsive Design
+
+### Desktop (≥1024px)
+- Full padding and spacing
+- Larger icon (60px)
+- Standard font sizes
+
+### Tablet (768px - 1023px)
+- Slightly reduced padding
+- Medium icon (50px)
+- Maintained readability
+
+### Mobile (<768px)
+- Compact padding
+- Smaller icon (40px)
+- Adjusted typography
+
+```css
+@media (max-width: 767px) {
+  .service-card {
+    padding: var(--spacing-4);
+  }
+
+  .service-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .service-title {
+    font-size: var(--text-xl);
+  }
+}
+```
+
+## Grid Layouts
+
+### Three Column Grid
+
+```css
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-6);
+}
+
+@media (max-width: 1023px) {
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+```
+
+### Auto-fit Grid
+
+```css
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-6);
+}
+```
+
+## Best Practices
+
+1. **Keep Content Concise**: Titles should be 2-4 words, descriptions 1-2 sentences
+2. **Use Icons Consistently**: All cards in a group should have icons or none at all
+3. **Accessible Hover States**: Ensure sufficient color contrast
+4. **Loading States**: Consider skeleton loaders for dynamic content
+5. **Equal Heights**: Use CSS Grid to maintain consistent card heights
+
+## Testing
+
+```javascript
+import { mount } from '@vue/test-utils'
+import ServiceCard from '@/components/Common/ServiceCard.vue'
+
+describe('ServiceCard', () => {
+  it('renders title and description', () => {
+    const wrapper = mount(ServiceCard, {
+      props: {
+        title: 'Test Service',
+        description: 'Test description'
+      }
+    })
+
+    expect(wrapper.text()).toContain('Test Service')
+    expect(wrapper.text()).toContain('Test description')
+  })
+
+  it('emits click event when clicked', async () => {
+    const wrapper = mount(ServiceCard, {
+      props: {
+        title: 'Test',
+        description: 'Test'
+      }
+    })
+
+    await wrapper.trigger('click')
+    expect(wrapper.emitted('click')).toBeTruthy()
+  })
+})
+```
+
+## Related Components
+
+- [Contact Form](/components/contact-form) - For service inquiries
+- [Timeline](/components/timeline) - For displaying credentials
+
+## Related Pages
+
+- [Component Architecture](/architecture/components)
+- [Design System](/architecture/design-system)

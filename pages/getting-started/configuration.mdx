@@ -1,0 +1,371 @@
+# Configuration
+
+This page covers the configuration options for both the site and docs applications.
+
+## Site Configuration
+
+### Vite Configuration (`site/vite.config.js`)
+
+The site uses Vite as its build tool and bundler.
+
+```javascript
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [vue()],
+  base: '/',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  build: {
+    outDir: 'dist',
+    target: 'esnext',
+    minify: 'terser',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router']
+        }
+      }
+    }
+  },
+  server: {
+    port: 8123,
+    open: true
+  }
+})
+```
+
+#### Key Settings
+
+- **`base`**: Base public path for deployment (set to `/` for custom domains)
+- **`alias`**: Path alias `@` points to `src/` directory
+- **`port`**: Development server runs on port 8123
+- **`manualChunks`**: Separates Vue dependencies into a vendor bundle
+
+### Package.json Scripts
+
+```json
+{
+  "scripts": {
+    "dev": "vite --port 8123",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+### Router Configuration (`site/src/router/index.js`)
+
+Vue Router is configured with lazy-loaded routes and SEO meta tags:
+
+```javascript
+import { createRouter, createWebHistory } from 'vue-router'
+
+const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
+    meta: {
+      title: 'Praxis Sarai Zeller | Psychotherapie',
+      description: 'Practice description...'
+    }
+  }
+  // ... more routes
+]
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    return { top: 0 }
+  }
+})
+
+// Update document title on route change
+router.afterEach((to) => {
+  document.title = to.meta.title || 'Praxis Sarai Zeller'
+})
+
+export default router
+```
+
+## Docs Configuration
+
+### Next.js Configuration (`docs/next.config.mjs`)
+
+The docs site uses Next.js with Nextra for documentation:
+
+```javascript
+import nextra from 'nextra'
+
+const withNextra = nextra({
+  theme: 'nextra-theme-docs',
+  themeConfig: './theme.config.jsx',
+  defaultShowCopyCode: true,
+  latex: true
+})
+
+export default withNextra({
+  output: 'export',
+  images: {
+    unoptimized: true
+  },
+  trailingSlash: true
+})
+```
+
+#### Key Settings
+
+- **`output: 'export'`**: Enables static site generation for GitHub Pages
+- **`images.unoptimized`**: Required for static export
+- **`trailingSlash`**: Adds trailing slashes to URLs for better compatibility
+
+### Theme Configuration (`docs/theme.config.jsx`)
+
+Nextra theme customization:
+
+```jsx
+export default {
+  logo: <span>Praxis Sarai Zeller Docs</span>,
+  project: {
+    link: 'https://github.com/your-username/praxis-sarai-zeller'
+  },
+  docsRepositoryBase: 'https://github.com/your-username/praxis-sarai-zeller/tree/main/docs',
+  footer: {
+    text: '© 2025 Praxis Sarai Zeller. All rights reserved.'
+  },
+  primaryHue: 12, // Warm red-orange matching site
+  useNextSeoProps() {
+    return {
+      titleTemplate: '%s – Praxis Sarai Zeller Docs'
+    }
+  }
+}
+```
+
+### Package.json Scripts
+
+```json
+{
+  "scripts": {
+    "dev": "next dev -p 8234",
+    "build": "next build",
+    "start": "next start",
+    "export": "next build && next export"
+  }
+}
+```
+
+## Environment Variables
+
+### Site Environment Variables
+
+Create a `.env` file in the `site/` directory (optional):
+
+```bash
+# Development
+VITE_APP_TITLE=Praxis Sarai Zeller
+VITE_API_URL=https://api.example.com
+
+# Production
+VITE_PUBLIC_URL=https://praxis-ansbach.de
+```
+
+Access in code:
+
+```javascript
+const title = import.meta.env.VITE_APP_TITLE
+```
+
+### Docs Environment Variables
+
+Create a `.env.local` file in the `docs/` directory (optional):
+
+```bash
+# Next.js environment variables
+NEXT_PUBLIC_SITE_URL=https://docs.praxis-ansbach.de
+```
+
+Access in code:
+
+```javascript
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+```
+
+## CSS Configuration
+
+### Global Styles (`site/src/styles/globals.css`)
+
+The site uses CSS variables for theming:
+
+```css
+:root {
+  /* Colors */
+  --color-primary: #D94A38;
+  --color-secondary: #FFED4E;
+  --color-accent: #F5A623;
+
+  /* Typography */
+  --font-primary: 'Inter', sans-serif;
+  --font-heading: 'Georgia', serif;
+
+  /* Spacing */
+  --spacing-4: 1rem;
+  --spacing-8: 2rem;
+
+  /* Breakpoints (use in media queries) */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+}
+```
+
+## Deployment Configuration
+
+### GitHub Actions (`.github/workflows/deploy.yml`)
+
+Site deployment workflow:
+
+```yaml
+name: Build and Deploy - Site Only
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+
+jobs:
+  build-and-deploy-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Site
+        working-directory: ./site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+```
+
+## Custom Domain Setup
+
+### Site Custom Domain
+
+Add a `CNAME` file in `site/public/`:
+
+```
+praxis-ansbach.de
+```
+
+Update `vite.config.js`:
+
+```javascript
+export default defineConfig({
+  base: '/', // Change to root for custom domain
+  // ... other config
+})
+```
+
+### Docs Custom Domain
+
+For independent docs deployment, configure in hosting provider:
+- Vercel: Add custom domain in project settings
+- Netlify: Add custom domain in site settings
+- GitHub Pages: Add CNAME in repository settings
+
+## Port Configuration
+
+### Development Ports
+
+To avoid conflicts, the apps use different ports:
+
+- **Site**: Port 8123 (configured in `vite.config.js` and `package.json`)
+- **Docs**: Port 8234 (configured in `package.json`)
+
+### Changing Ports
+
+**Site** - Update in two places:
+
+1. `vite.config.js`:
+```javascript
+server: {
+  port: 8123, // Change here
+}
+```
+
+2. `package.json`:
+```json
+{
+  "scripts": {
+    "dev": "vite --port 8123" // And here
+  }
+}
+```
+
+**Docs** - Update in `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev -p 8234" // Change here
+  }
+}
+```
+
+## Performance Configuration
+
+### Site Performance
+
+Configure in `vite.config.js`:
+
+```javascript
+build: {
+  target: 'esnext',
+  minify: 'terser',
+  cssCodeSplit: true,
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        'vue-vendor': ['vue', 'vue-router']
+      }
+    }
+  }
+}
+```
+
+### Docs Performance
+
+Nextra automatically handles:
+- Code splitting by page
+- Image optimization (when deployed)
+- Tree shaking of unused code
+
+## Related Pages
+
+- [Installation](/getting-started/installation)
+- [Development](/getting-started/development)
+- [Project Structure](/getting-started/project-structure)
+- [Deployment](/deployment/github-pages)

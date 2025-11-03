@@ -1,0 +1,242 @@
+# Development Workflow
+
+Learn about the development workflow for the Praxis Sarai Zeller website.
+
+## Development Server
+
+Start the development server with hot module replacement (HMR):
+
+```bash
+npm run dev
+```
+
+The development server will start at `http://localhost:5173/` and automatically reload when you make changes to the code.
+
+### Development Server Features
+
+- **Hot Module Replacement (HMR)**: Instant updates without full page reload
+- **Fast Refresh**: Preserves component state during updates
+- **Error Overlay**: Clear error messages in the browser
+- **Source Maps**: Easy debugging with original source code
+
+## Available Commands
+
+### Development
+
+```bash
+# Start development server
+npm run dev
+
+# Start on a different port
+npx vite --port 3000
+```
+
+### Building
+
+```bash
+# Build for production
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+### Code Quality
+
+```bash
+# Run linter (if configured)
+npm run lint
+
+# Format code (if configured)
+npm run format
+```
+
+## Development Best Practices
+
+### 1. Component Development
+
+When creating new components:
+
+- Use Composition API with `<script setup>`
+- Keep components small and focused
+- Use props for parent-child communication
+- Emit events for child-parent communication
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
+  }
+})
+
+const emit = defineEmits(['click'])
+
+const handleClick = () => {
+  emit('click')
+}
+</script>
+
+<template>
+  <button @click="handleClick">
+    {{ title }}
+  </button>
+</template>
+```
+
+### 2. Styling
+
+- Use scoped styles to avoid conflicts
+- Follow the design system variables from `globals.css`
+- Maintain consistent spacing and typography
+
+```vue
+<style scoped>
+.my-component {
+  padding: var(--spacing-4);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+}
+</style>
+```
+
+### 3. Routing
+
+Add new routes in `src/router/index.js`:
+
+```javascript
+{
+  path: '/new-page',
+  name: 'NewPage',
+  component: () => import('@/views/NewPage.vue'),
+  meta: {
+    title: 'New Page | Praxis Sarai Zeller',
+    description: 'Description for SEO'
+  }
+}
+```
+
+### 4. File Organization
+
+- **Components**: Reusable UI elements in `src/components/`
+- **Views**: Page-level components in `src/views/`
+- **Styles**: Global styles in `src/styles/`
+- **Assets**: Images and static files in `public/`
+
+## Development Tips
+
+### Hot Module Replacement
+
+HMR automatically updates your browser when you save changes:
+
+- **Template changes**: Instant updates
+- **Script changes**: Fast refresh with state preservation
+- **Style changes**: Instant CSS injection
+
+### Browser DevTools
+
+Use Vue DevTools for debugging:
+
+1. Install [Vue DevTools](https://devtools.vuejs.org/) browser extension
+2. Open DevTools (F12 or Cmd+Option+I)
+3. Navigate to the Vue tab
+4. Inspect components, routes, and state
+
+### Performance Monitoring
+
+Monitor performance during development:
+
+```javascript
+// Add performance marks
+performance.mark('start-operation')
+// ... your code
+performance.mark('end-operation')
+performance.measure('operation', 'start-operation', 'end-operation')
+```
+
+## Common Development Tasks
+
+### Adding a New Page
+
+1. Create view component in `src/views/`:
+
+```vue
+<!-- src/views/NewPage.vue -->
+<script setup>
+// Your logic
+</script>
+
+<template>
+  <div class="new-page">
+    <h1>New Page</h1>
+  </div>
+</template>
+
+<style scoped>
+.new-page {
+  padding: var(--spacing-12) 0;
+}
+</style>
+```
+
+2. Add route in `src/router/index.js`
+
+3. Add navigation link in Header component
+
+### Modifying Styles
+
+1. Check `src/styles/globals.css` for existing variables
+2. Use CSS variables for consistency
+3. Keep styles scoped to components when possible
+
+### Working with Forms
+
+Use the ContactForm component as a reference:
+
+```vue
+<script setup>
+import { reactive } from 'vue'
+
+const formData = reactive({
+  name: '',
+  email: ''
+})
+
+const handleSubmit = () => {
+  // Handle form submission
+}
+</script>
+```
+
+## Debugging
+
+### Console Logging
+
+```javascript
+console.log('Debug info:', variable)
+console.error('Error:', error)
+console.warn('Warning:', warning)
+```
+
+### Vue DevTools
+
+- Inspect component props and data
+- View component hierarchy
+- Monitor events
+- Track route changes
+
+### Network Requests
+
+- Open Browser DevTools → Network tab
+- Monitor API calls
+- Check request/response headers
+- Inspect payload data
+
+## Next Steps
+
+- [Understand the project structure](/getting-started/project-structure)
+- [Learn about configuration](/getting-started/configuration)
+- [Explore components](/components/overview)

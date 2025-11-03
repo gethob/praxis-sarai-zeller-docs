@@ -1,0 +1,190 @@
+# Project Structure
+
+This page describes the overall structure of the Praxis Sarai Zeller monorepo.
+
+## Repository Overview
+
+The repository follows a monorepo structure with two independent applications:
+
+```
+praxis-sarai-zeller/
+├── site/                    # Vue.js 3 Website
+├── docs/                    # Nextra Documentation
+├── .github/workflows/       # GitHub Actions
+├── README.md               # Main documentation
+├── DEPLOYMENT.md           # Deployment guide
+└── QUICK_START.md          # Quick start guide
+```
+
+## Site Structure
+
+The main website is built with Vue.js 3 and Vite:
+
+```
+site/
+├── public/              # Static assets
+│   ├── favicon.ico
+│   ├── logo.svg
+│   └── images/
+├── src/
+│   ├── components/     # Reusable components
+│   │   ├── Common/
+│   │   └── Navigation/
+│   ├── views/          # Page components
+│   │   ├── Home.vue
+│   │   ├── Therapeutin.vue
+│   │   ├── Therapien.vue
+│   │   └── ...
+│   ├── router/         # Vue Router config
+│   │   └── index.js
+│   ├── styles/         # Global styles & design system
+│   │   └── globals.css
+│   ├── App.vue         # Root component
+│   └── main.js         # Entry point
+├── index.html          # HTML template with SEO
+├── vite.config.js      # Vite configuration
+└── package.json        # Dependencies
+```
+
+### Key Directories
+
+- **`public/`**: Static assets that are copied as-is to the build output
+- **`src/components/`**: Reusable Vue components organized by feature
+- **`src/views/`**: Page-level components (one per route)
+- **`src/router/`**: Vue Router configuration and route definitions
+- **`src/styles/`**: Global CSS, design system variables, and utilities
+
+## Docs Structure
+
+The documentation site is built with Nextra (Next.js + MDX):
+
+```
+docs/
+├── pages/              # Documentation pages (MDX)
+│   ├── _app.jsx       # Custom App component
+│   ├── _meta.jsx      # Navigation configuration
+│   ├── index.mdx      # Homepage
+│   ├── getting-started/
+│   │   ├── _meta.jsx
+│   │   ├── installation.mdx
+│   │   ├── development.mdx
+│   │   ├── project-structure.mdx
+│   │   └── configuration.mdx
+│   ├── architecture/
+│   │   ├── _meta.jsx
+│   │   ├── overview.mdx
+│   │   ├── design-system.mdx
+│   │   ├── routing.mdx
+│   │   └── components.mdx
+│   ├── components/
+│   │   ├── _meta.jsx
+│   │   └── ... (component docs)
+│   ├── deployment/
+│   │   ├── _meta.jsx
+│   │   └── ... (deployment docs)
+│   └── guides/
+│       ├── _meta.jsx
+│       └── index.mdx
+├── theme.config.jsx    # Nextra theme config
+├── next.config.mjs     # Next.js config
+└── package.json        # Dependencies
+```
+
+### Key Directories
+
+- **`pages/`**: MDX documentation files organized by topic
+- **`_meta.jsx`**: Files that define the navigation structure and order
+- **`theme.config.jsx`**: Nextra theme customization
+
+## Configuration Files
+
+### Root Level
+
+- **`.github/workflows/`**: GitHub Actions workflows for CI/CD
+  - `deploy.yml`: Site deployment workflow
+  - `deploy-docs.yml`: Docs deployment workflow (disabled)
+
+### Site Configuration
+
+- **`vite.config.js`**: Vite build configuration
+  - Port: 8123
+  - Base path: `/`
+  - Build optimization settings
+
+- **`package.json`**: Site dependencies and scripts
+  - `npm run dev`: Start dev server
+  - `npm run build`: Production build
+  - `npm run preview`: Preview build
+
+### Docs Configuration
+
+- **`next.config.mjs`**: Next.js and Nextra configuration
+  - Port: 8234 (in package.json)
+  - Static export enabled
+  - Image optimization disabled
+
+- **`theme.config.jsx`**: Theme customization
+  - Logo and branding
+  - Navigation settings
+  - Footer configuration
+
+## Development Workflow
+
+### Local Development
+
+```bash
+# Terminal 1 - Site
+cd site
+npm run dev  # Runs on http://localhost:8123
+
+# Terminal 2 - Docs
+cd docs
+npm run dev  # Runs on http://localhost:8234
+```
+
+### Building for Production
+
+```bash
+# Build site
+cd site
+npm run build  # Output: site/dist/
+
+# Build docs
+cd docs
+npm run build  # Output: docs/out/
+```
+
+## Best Practices
+
+### File Organization
+
+1. **Components**: Group related components in subdirectories
+2. **Views**: One file per page/route
+3. **Styles**: Use global CSS variables for consistency
+4. **Docs**: Organize by topic with clear _meta.jsx files
+
+### Naming Conventions
+
+- **Components**: PascalCase (e.g., `ServiceCard.vue`)
+- **Views**: PascalCase matching route name (e.g., `Therapeutin.vue`)
+- **Utilities**: camelCase (e.g., `formatDate.js`)
+- **Docs**: kebab-case (e.g., `project-structure.mdx`)
+
+### Import Paths
+
+The site uses path aliases for cleaner imports:
+
+```javascript
+// ✅ Good - using alias
+import Header from '@/components/Navigation/Header.vue'
+
+// ❌ Avoid - relative paths
+import Header from '../../components/Navigation/Header.vue'
+```
+
+## Related Pages
+
+- [Installation](/getting-started/installation)
+- [Development](/getting-started/development)
+- [Configuration](/getting-started/configuration)
+- [Architecture Overview](/architecture/overview)

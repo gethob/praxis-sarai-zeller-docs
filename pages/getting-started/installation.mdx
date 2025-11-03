@@ -1,0 +1,116 @@
+# Installation
+
+Get the Praxis Sarai Zeller website up and running on your local machine.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js**: Version 18.x or higher
+- **npm**: Version 9.x or higher (comes with Node.js)
+- **Git**: For version control
+
+### Check Your Environment
+
+```bash
+node --version  # Should be v18.x or higher
+npm --version   # Should be v9.x or higher
+git --version   # Any recent version
+```
+
+## Clone the Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/praxis-sarai-zeller.git
+
+# Navigate to the site directory
+cd praxis-sarai-zeller/site
+```
+
+## Install Dependencies
+
+```bash
+npm install
+```
+
+This will install all necessary dependencies including:
+
+- **Vue.js 3**: Core framework
+- **Vue Router 4**: Routing library
+- **Vite**: Build tool and dev server
+
+## Verify Installation
+
+To verify that everything is installed correctly:
+
+```bash
+npm run dev
+```
+
+You should see output similar to:
+
+```
+VITE v5.x.x  ready in 797 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+```
+
+Open your browser and navigate to `http://localhost:5173/` to see the website running locally.
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 5173 is already in use, Vite will automatically try the next available port (5174, 5175, etc.).
+
+### Node Version Issues
+
+If you encounter version-related errors, use [nvm](https://github.com/nvm-sh/nvm) (Node Version Manager):
+
+```bash
+# Install Node.js 18
+nvm install 18
+
+# Use Node.js 18
+nvm use 18
+```
+
+### Dependency Installation Errors
+
+If `npm install` fails, try:
+
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules and package-lock.json
+rm -rf node_modules package-lock.json
+
+# Reinstall dependencies
+npm install
+```
+
+## Next Steps
+
+Once installation is complete:
+
+1. [Learn about the development workflow](/getting-started/development)
+2. [Understand the project structure](/getting-started/project-structure)
+3. [Configure the application](/getting-started/configuration)
+
+## System Requirements
+
+### Minimum Requirements
+
+- **OS**: Windows 10, macOS 10.15+, or Linux
+- **RAM**: 4 GB
+- **Disk Space**: 500 MB for dependencies
+
+### Recommended Requirements
+
+- **OS**: Latest version of macOS, Windows, or Linux
+- **RAM**: 8 GB or more
+- **Disk Space**: 1 GB or more
+- **Display**: 1920x1080 or higher for comfortable development

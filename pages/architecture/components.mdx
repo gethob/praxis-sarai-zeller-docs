@@ -1,0 +1,537 @@
+# Component Architecture
+
+The Praxis Sarai Zeller website follows a component-based architecture using Vue 3's Composition API.
+
+## Component Structure
+
+### Directory Organization
+
+```
+site/src/components/
+├── Common/              # Reusable UI components
+│   ├── ServiceCard.vue
+│   ├── ContactForm.vue
+│   ├── Timeline.vue
+│   └── Gallery.vue
+└── Navigation/          # Navigation components
+    ├── Header.vue
+    └── Footer.vue
+```
+
+### Component Categories
+
+1. **Common Components**: Reusable across multiple pages
+2. **Navigation Components**: Header, footer, and menu
+3. **View Components**: Page-level components in `src/views/`
+
+## Component Template
+
+All components follow a consistent structure using Composition API:
+
+```vue
+<script setup>
+// 1. Imports
+import { ref, computed, onMounted } from 'vue'
+
+// 2. Props
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
+  },
+  description: String
+})
+
+// 3. Emits
+const emit = defineEmits(['submit', 'cancel'])
+
+// 4. Reactive State
+const isOpen = ref(false)
+
+// 5. Computed Properties
+const formattedTitle = computed(() => {
+  return props.title.toUpperCase()
+})
+
+// 6. Methods
+const handleSubmit = () => {
+  emit('submit')
+}
+
+// 7. Lifecycle Hooks
+onMounted(() => {
+  console.log('Component mounted')
+})
+</script>
+
+<template>
+  <!-- Component template -->
+  <div class="component">
+    <h2>{{ formattedTitle }}</h2>
+    <p>{{ description }}</p>
+    <button @click="handleSubmit">Submit</button>
+  </div>
+</template>
+
+<style scoped>
+.component {
+  /* Component-specific styles */
+  padding: var(--spacing-6);
+}
+</style>
+```
+
+## Component Communication
+
+### Props (Parent → Child)
+
+```vue
+<!-- Parent -->
+<template>
+  <ServiceCard
+    title="Verhaltenstherapie"
+    :description="therapyDescription"
+    :is-featured="true"
+  />
+</template>
+
+<!-- Child (ServiceCard.vue) -->
+<script setup>
+const props = defineProps({
+  title: {
+    type: String,
+    required: true
+  },
+  description: String,
+  isFeatured: {
+    type: Boolean,
+    default: false
+  }
+})
+</script>
+```
+
+### Events (Child → Parent)
+
+```vue
+<!-- Child -->
+<script setup>
+const emit = defineEmits(['submit', 'cancel'])
+
+const handleFormSubmit = (data) => {
+  emit('submit', data)
+}
+</script>
+
+<template>
+  <button @click="handleFormSubmit(formData)">Submit</button>
+</template>
+
+<!-- Parent -->
+<template>
+  <ContactForm @submit="handleContactSubmit" />
+</template>
+
+<script setup>
+const handleContactSubmit = (data) => {
+  console.log('Form submitted:', data)
+}
+</script>
+```
+
+### Provide/Inject (Deep Passing)
+
+For deeply nested components:
+
+```vue
+<!-- Parent -->
+<script setup>
+import { provide, ref } from 'vue'
+
+const theme = ref('light')
+provide('theme', theme)
+</script>
+
+<!-- Descendant -->
+<script setup>
+import { inject } from 'vue'
+
+const theme = inject('theme')
+</script>
+```
+
+## Composition API Patterns
+
+### Composables (Reusable Logic)
+
+Create composables for shared logic:
+
+```javascript
+// src/composables/useContact.js
+import { ref } from 'vue'
+
+export function useContact() {
+  const loading = ref(false)
+  const error = ref(null)
+
+  const sendMessage = async (data) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      // API call here
+      await fetch('/api/contact', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    loading,
+    error,
+    sendMessage
+  }
+}
+```
+
+Usage:
+
+```vue
+<script setup>
+import { useContact } from '@/composables/useContact'
+
+const { loading, error, sendMessage } = useContact()
+
+const handleSubmit = async (formData) => {
+  await sendMessage(formData)
+}
+</script>
+```
+
+### Refs and Reactivity
+
+```vue
+<script setup>
+import { ref, reactive, computed } from 'vue'
+
+// ref - for primitive values
+const count = ref(0)
+const increment = () => count.value++
+
+// reactive - for objects
+const user = reactive({
+  name: 'Sarai Zeller',
+  email: 'kontakt@praxis-ansbach.de'
+})
+
+// computed - derived state
+const displayName = computed(() => {
+  return `Dr. ${user.name}`
+})
+</script>
+```
+
+## Component Best Practices
+
+### 1. Single Responsibility
+
+Each component should have one clear purpose:
+
+```vue
+<!-- ✅ Good - focused component -->
+<template>
+  <article class="service-card">
+    <h3>{{ title }}</h3>
+    <p>{{ description }}</p>
+  </article>
+</template>
+
+<!-- ❌ Avoid - doing too much -->
+<template>
+  <div>
+    <header><!-- Navigation --></header>
+    <main><!-- Content --></main>
+    <footer><!-- Footer --></footer>
+    <div><!-- Modal --></div>
+    <div><!-- Notifications --></div>
+  </div>
+</template>
+```
+
+### 2. Props Validation
+
+Always validate props:
+
+```vue
+<script setup>
+const props = defineProps({
+  title: {
+    type: String,
+    required: true,
+    validator: (value) => value.length > 0
+  },
+  count: {
+    type: Number,
+    default: 0,
+    validator: (value) => value >= 0
+  },
+  status: {
+    type: String,
+    validator: (value) => ['active', 'inactive', 'pending'].includes(value)
+  }
+})
+</script>
+```
+
+### 3. Component Naming
+
+Use PascalCase for multi-word component names:
+
+```
+✅ ServiceCard.vue
+✅ ContactForm.vue
+✅ ImageGallery.vue
+
+❌ servicecard.vue
+❌ Contactform.vue
+❌ gallery.vue
+```
+
+### 4. Scoped Styles
+
+Always use scoped styles to prevent CSS conflicts:
+
+```vue
+<style scoped>
+.card {
+  padding: var(--spacing-6);
+  /* Only applies to this component */
+}
+</style>
+```
+
+### 5. Emit Events with Descriptive Names
+
+```vue
+<script setup>
+// ✅ Good - descriptive
+const emit = defineEmits(['form-submit', 'cancel-edit', 'delete-item'])
+
+// ❌ Avoid - vague
+const emit = defineEmits(['submit', 'cancel', 'delete'])
+</script>
+```
+
+### 6. Use Computed for Derived State
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+
+const services = ref([...])
+
+// ✅ Good - using computed
+const activeServices = computed(() => {
+  return services.value.filter(s => s.active)
+})
+
+// ❌ Avoid - using method (re-runs on every render)
+const getActiveServices = () => {
+  return services.value.filter(s => s.active)
+}
+</script>
+```
+
+## Component Examples
+
+### ServiceCard Component
+
+```vue
+<script setup>
+defineProps({
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  icon: String
+})
+</script>
+
+<template>
+  <article class="service-card">
+    <div v-if="icon" class="service-icon">
+      <img :src="icon" :alt="title" />
+    </div>
+    <h3 class="service-title">{{ title }}</h3>
+    <p class="service-description">{{ description }}</p>
+  </article>
+</template>
+
+<style scoped>
+.service-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  transition: all var(--transition-base);
+}
+
+.service-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.service-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  margin-bottom: var(--spacing-3);
+}
+</style>
+```
+
+### ContactForm Component
+
+```vue
+<script setup>
+import { ref } from 'vue'
+
+const emit = defineEmits(['submit'])
+
+const formData = ref({
+  name: '',
+  email: '',
+  message: ''
+})
+
+const handleSubmit = () => {
+  emit('submit', formData.value)
+  // Reset form
+  formData.value = { name: '', email: '', message: '' }
+}
+</script>
+
+<template>
+  <form @submit.prevent="handleSubmit" class="contact-form">
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input
+        id="name"
+        v-model="formData.name"
+        type="text"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="email">E-Mail</label>
+      <input
+        id="email"
+        v-model="formData.email"
+        type="email"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="message">Nachricht</label>
+      <textarea
+        id="message"
+        v-model="formData.message"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+      Absenden
+    </button>
+  </form>
+</template>
+```
+
+## Testing Components
+
+### Unit Testing with Vitest
+
+```javascript
+import { mount } from '@vue/test-utils'
+import { describe, it, expect } from 'vitest'
+import ServiceCard from '@/components/Common/ServiceCard.vue'
+
+describe('ServiceCard', () => {
+  it('renders title and description', () => {
+    const wrapper = mount(ServiceCard, {
+      props: {
+        title: 'Test Service',
+        description: 'Test description'
+      }
+    })
+
+    expect(wrapper.text()).toContain('Test Service')
+    expect(wrapper.text()).toContain('Test description')
+  })
+
+  it('emits click event', async () => {
+    const wrapper = mount(ServiceCard, {
+      props: {
+        title: 'Test',
+        description: 'Test'
+      }
+    })
+
+    await wrapper.find('button').trigger('click')
+    expect(wrapper.emitted('click')).toBeTruthy()
+  })
+})
+```
+
+## Performance Optimization
+
+### 1. Use `v-once` for Static Content
+
+```vue
+<template>
+  <div v-once>
+    <!-- This content won't re-render -->
+    <h1>{{ staticTitle }}</h1>
+  </div>
+</template>
+```
+
+### 2. Use `v-memo` for Expensive Renders
+
+```vue
+<template>
+  <div v-memo="[item.id, item.selected]">
+    <!-- Only re-renders if id or selected changes -->
+    <ExpensiveComponent :data="item" />
+  </div>
+</template>
+```
+
+### 3. Lazy Load Heavy Components
+
+```vue
+<script setup>
+import { defineAsyncComponent } from 'vue'
+
+const Gallery = defineAsyncComponent(() =>
+  import('@/components/Common/Gallery.vue')
+)
+</script>
+```
+
+## Related Pages
+
+- [Overview](/architecture/overview)
+- [Design System](/architecture/design-system)
+- [Routing](/architecture/routing)
+- [Components Reference](/components/overview)

@@ -1,0 +1,402 @@
+# Routing
+
+The Praxis Sarai Zeller website uses Vue Router 4 for client-side routing with lazy-loaded components and SEO optimization.
+
+## Router Configuration
+
+Located at `site/src/router/index.js`:
+
+```javascript
+import { createRouter, createWebHistory } from 'vue-router'
+
+const routes = [
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
+    meta: {
+      title: 'Praxis Sarai Zeller | Kinder- und Jugendlichenpsychotherapie',
+      description: 'Verhaltenstherapie für Kinder, Jugendliche...'
+    }
+  },
+  // ... more routes
+]
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    return { top: 0 }
+  }
+})
+
+export default router
+```
+
+## Routes
+
+### Main Routes
+
+| Path | Component | Description |
+|------|-----------|-------------|
+| `/` | `Home.vue` | Homepage with introduction and overview |
+| `/therapeutin` | `Therapeutin.vue` | Therapist profile and qualifications |
+| `/therapien` | `Therapien.vue` | Therapy services and approaches |
+| `/praxis` | `Facilities.vue` | Practice facilities and environment |
+| `/termine` | `Appointments.vue` | Appointment booking information |
+| `/kontakt` | `Contact.vue` | Contact form and information |
+| `/notfall` | `Emergency.vue` | Emergency contacts and crisis resources |
+| `/anfahrt` | `Directions.vue` | Directions and location map |
+| `/impressum` | `Legal.vue` | Legal notice and imprint |
+| `/datenschutz` | `Privacy.vue` | Privacy policy |
+
+## History Mode
+
+The router uses **HTML5 History Mode** (`createWebHistory`):
+
+```javascript
+history: createWebHistory(import.meta.env.BASE_URL)
+```
+
+### Benefits
+
+- Clean URLs without hash (`#`)
+- Better SEO
+- More intuitive user experience
+
+### Server Configuration
+
+For production deployment, the server must be configured to fallback to `index.html` for all routes:
+
+**GitHub Pages**: Handled automatically with the provided workflow
+
+**Custom Server (nginx)**:
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
+**Custom Server (Apache)**:
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+```
+
+## Lazy Loading
+
+All route components use dynamic imports for code splitting:
+
+```javascript
+{
+  path: '/therapeutin',
+  name: 'Therapeutin',
+  component: () => import('@/views/Therapeutin.vue')
+}
+```
+
+### Benefits
+
+- Smaller initial bundle size
+- Faster page load
+- Better performance
+- Components loaded on-demand
+
+## Route Meta Fields
+
+Each route includes metadata for SEO and page configuration:
+
+```javascript
+{
+  path: '/therapien',
+  name: 'Therapien',
+  component: () => import('@/views/Therapien.vue'),
+  meta: {
+    title: 'Therapieangebote | Praxis Sarai Zeller',
+    description: 'Verhaltenstherapie für Kinder und Jugendliche...',
+    keywords: 'Verhaltenstherapie, Kinder, Jugendliche, Ansbach'
+  }
+}
+```
+
+### Meta Field Usage
+
+- **`title`**: Page title (set in `<title>` tag)
+- **`description`**: Meta description for SEO
+- **`keywords`**: Meta keywords (optional)
+
+## Document Title Management
+
+The router automatically updates the document title on navigation:
+
+```javascript
+router.afterEach((to) => {
+  document.title = to.meta.title || 'Praxis Sarai Zeller'
+})
+```
+
+## Scroll Behavior
+
+### Default Behavior
+
+```javascript
+scrollBehavior(to, from, savedPosition) {
+  if (savedPosition) {
+    // Restore scroll position on back/forward
+    return savedPosition
+  }
+  if (to.hash) {
+    // Scroll to anchor with smooth behavior
+    return { el: to.hash, behavior: 'smooth' }
+  }
+  // Scroll to top for new routes
+  return { top: 0 }
+}
+```
+
+### Features
+
+1. **Saved Position**: Restores scroll position when using browser back/forward buttons
+2. **Anchor Links**: Smooth scroll to anchor links (e.g., `#section`)
+3. **Top Reset**: Scrolls to top when navigating to new routes
+
+### Anchor Link Example
+
+```vue
+<template>
+  <router-link to="/therapien#verhaltenstherapie">
+    Verhaltenstherapie
+  </router-link>
+</template>
+```
+
+## Navigation Guards
+
+### Global Navigation Guard (if needed)
+
+Add authentication or logging:
+
+```javascript
+router.beforeEach((to, from, next) => {
+  // Log navigation (for analytics)
+  console.log(`Navigating from ${from.path} to ${to.path}`)
+
+  // Always proceed
+  next()
+})
+```
+
+### Route-Specific Guards
+
+```javascript
+{
+  path: '/admin',
+  component: () => import('@/views/Admin.vue'),
+  beforeEnter: (to, from, next) => {
+    // Check authentication
+    if (isAuthenticated()) {
+      next()
+    } else {
+      next('/login')
+    }
+  }
+}
+```
+
+## Active Link Styling
+
+Vue Router automatically adds classes to active links:
+
+### Default Classes
+
+- `router-link-active`: Link matches current route or parent
+- `router-link-exact-active`: Link exactly matches current route
+
+### CSS Example
+
+```css
+.nav-link {
+  color: var(--color-text);
+  transition: color var(--transition-base);
+}
+
+.nav-link.router-link-exact-active {
+  color: var(--color-primary);
+  font-weight: var(--font-semibold);
+}
+```
+
+### Component Example
+
+```vue
+<template>
+  <nav>
+    <router-link to="/" class="nav-link">Home</router-link>
+    <router-link to="/therapeutin" class="nav-link">Therapeutin</router-link>
+  </nav>
+</template>
+```
+
+## Programmatic Navigation
+
+### Using Router in Components
+
+```vue
+<script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goToContact = () => {
+  router.push('/kontakt')
+}
+
+const goBack = () => {
+  router.back()
+}
+</script>
+
+<template>
+  <button @click="goToContact">Contact Us</button>
+  <button @click="goBack">Go Back</button>
+</template>
+```
+
+### Navigation Methods
+
+```javascript
+// Push to new route
+router.push('/therapeutin')
+
+// Push with name
+router.push({ name: 'Therapeutin' })
+
+// Push with query parameters
+router.push({ path: '/termine', query: { type: 'initial' } })
+
+// Push with hash
+router.push({ path: '/therapien', hash: '#verhaltenstherapie' })
+
+// Replace current route (no history entry)
+router.replace('/therapeutin')
+
+// Go back
+router.back()
+
+// Go forward
+router.forward()
+
+// Go to specific history entry
+router.go(-2) // Go back 2 entries
+```
+
+## Dynamic Routes (Future)
+
+For future expansion, dynamic routes can be added:
+
+```javascript
+{
+  path: '/blog/:slug',
+  name: 'BlogPost',
+  component: () => import('@/views/BlogPost.vue'),
+  props: true
+}
+```
+
+Access the parameter:
+
+```vue
+<script setup>
+const props = defineProps({
+  slug: String
+})
+</script>
+```
+
+## Route Transitions
+
+Add transitions between routes in `App.vue`:
+
+```vue
+<template>
+  <router-view v-slot="{ Component }">
+    <transition name="fade" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
+</template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
+```
+
+## Best Practices
+
+### 1. Use Named Routes
+
+```javascript
+// ✅ Good - using name
+router.push({ name: 'Therapeutin' })
+
+// ❌ Avoid - using path
+router.push('/therapeutin')
+```
+
+### 2. Lazy Load All Routes
+
+```javascript
+// ✅ Good - lazy loaded
+component: () => import('@/views/Home.vue')
+
+// ❌ Avoid - eager loading
+import Home from '@/views/Home.vue'
+component: Home
+```
+
+### 3. Always Include Meta Tags
+
+```javascript
+// ✅ Good - includes SEO meta
+meta: {
+  title: 'Page Title',
+  description: 'Page description'
+}
+```
+
+### 4. Handle 404 Routes
+
+```javascript
+{
+  path: '/:pathMatch(.*)*',
+  name: 'NotFound',
+  component: () => import('@/views/NotFound.vue')
+}
+```
+
+## Related Pages
+
+- [Overview](/architecture/overview)
+- [Design System](/architecture/design-system)
+- [Component Architecture](/architecture/components)
+- [Configuration](/getting-started/configuration)

@@ -1,0 +1,301 @@
+# Architecture Overview
+
+Understanding the architectural decisions and patterns used in the Praxis Sarai Zeller website.
+
+## High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                   Browser                        │
+├─────────────────────────────────────────────────┤
+│              Vue.js 3 Application               │
+│  ┌─────────────────────────────────────────┐  │
+│  │         Vue Router (SPA Routing)        │  │
+│  └─────────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────────┐  │
+│  │        Components & Views              │  │
+│  │  ┌──────────┐  ┌──────────┐           │  │
+│  │  │ Header   │  │ Footer   │           │  │
+│  │  └──────────┘  └──────────┘           │  │
+│  │  ┌─────────────────────────────────┐  │  │
+│  │  │      Page Components            │  │  │
+│  │  │  (Home, About, Contact, etc.)   │  │  │
+│  │  └─────────────────────────────────┘  │  │
+│  └─────────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────────┐  │
+│  │       Global Styles & Design System     │  │
+│  └─────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+### Core Framework
+
+**Vue.js 3** with Composition API
+
+- Modern, performant JavaScript framework
+- Component-based architecture
+- Reactive data binding
+- Virtual DOM for efficient updates
+
+### Build Tool
+
+**Vite 5**
+
+- Lightning-fast dev server with HMR
+- Optimized production builds
+- Native ES modules
+- Tree-shaking and code splitting
+
+### Routing
+
+**Vue Router 4**
+
+- Client-side routing (SPA)
+- Lazy-loaded routes
+- Route-based code splitting
+- Clean, semantic URLs
+
+### Styling
+
+**CSS3** with custom design system
+
+- CSS Variables for theming
+- Mobile-first responsive design
+- Scoped component styles
+- No CSS frameworks (lightweight)
+
+## Project Structure
+
+```
+site/
+├── public/                    # Static assets
+│   ├── images/               # Images
+│   ├── robots.txt           # SEO robots file
+│   ├── sitemap.xml          # SEO sitemap
+│   └── .nojekyll            # GitHub Pages config
+│
+├── src/
+│   ├── components/          # Reusable components
+│   │   ├── Navigation/
+│   │   │   ├── Header.vue   # Main header
+│   │   │   └── Footer.vue   # Site footer
+│   │   ├── Cards/
+│   │   │   └── ServiceCard.vue
+│   │   ├── Forms/
+│   │   │   └── ContactForm.vue
+│   │   ├── Gallery/
+│   │   │   └── ImageGallery.vue
+│   │   └── Timeline/
+│   │       └── CredentialsTimeline.vue
+│   │
+│   ├── views/               # Page components
+│   │   ├── Home.vue
+│   │   ├── Therapeutin.vue
+│   │   ├── Therapien.vue
+│   │   ├── Facilities.vue
+│   │   ├── Appointments.vue
+│   │   ├── Contact.vue
+│   │   ├── Emergency.vue
+│   │   ├── Directions.vue
+│   │   ├── Legal.vue
+│   │   └── Privacy.vue
+│   │
+│   ├── router/              # Routing configuration
+│   │   └── index.js        # Route definitions
+│   │
+│   ├── styles/              # Global styles
+│   │   └── globals.css     # Design system
+│   │
+│   ├── App.vue              # Root component
+│   └── main.js              # Application entry
+│
+├── index.html               # HTML template
+├── vite.config.js           # Vite configuration
+└── package.json             # Dependencies
+```
+
+## Design Patterns
+
+### Component Composition
+
+Components are organized hierarchically:
+
+```
+App.vue
+├── Header.vue
+├── RouterView (Page Component)
+│   ├── ServiceCard.vue
+│   ├── ContactForm.vue
+│   └── Other components...
+└── Footer.vue
+```
+
+### Composition API Pattern
+
+All components use the Composition API with `<script setup>`:
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+
+// Reactive state
+const count = ref(0)
+
+// Computed properties
+const doubleCount = computed(() => count.value * 2)
+
+// Methods
+const increment = () => {
+  count.value++
+}
+</script>
+```
+
+### Route-Based Code Splitting
+
+Routes are lazy-loaded for optimal performance:
+
+```javascript
+const Home = () => import('@/views/Home.vue')
+const About = () => import('@/views/Therapeutin.vue')
+```
+
+### Scoped Styling
+
+Each component has scoped styles to avoid conflicts:
+
+```vue
+<style scoped>
+.my-component {
+  /* Styles only apply to this component */
+}
+</style>
+```
+
+## Data Flow
+
+```
+┌─────────────────────────────────────┐
+│            User Action              │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│        Event Handler                │
+│     (Component Method)              │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│       Update Reactive State         │
+│        (ref, reactive)              │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│     Vue Reactivity System           │
+│     (Automatically Updates)         │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│         Re-render Component         │
+│         (Virtual DOM Diff)          │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│       Update Real DOM               │
+│      (Minimal Changes)              │
+└─────────────────────────────────────┘
+```
+
+## State Management
+
+### Local Component State
+
+Most state is managed at the component level using `ref()` and `reactive()`:
+
+```vue
+<script setup>
+import { ref } from 'vue'
+
+const isOpen = ref(false)
+const formData = reactive({
+  name: '',
+  email: ''
+})
+</script>
+```
+
+### Props Down, Events Up
+
+- Parent components pass data to children via **props**
+- Children communicate with parents via **emitted events**
+
+```vue
+<!-- Parent -->
+<ChildComponent :data="parentData" @update="handleUpdate" />
+
+<!-- Child -->
+<script setup>
+const props = defineProps(['data'])
+const emit = defineEmits(['update'])
+
+const handleChange = () => {
+  emit('update', newValue)
+}
+</script>
+```
+
+## Performance Considerations
+
+### Code Splitting
+
+- Routes are lazy-loaded
+- Large components are dynamically imported
+- Vendor code is separated into chunks
+
+### Asset Optimization
+
+- Images are optimized and lazy-loaded
+- CSS is minified and tree-shaken
+- JavaScript is bundled and minimized
+
+### Caching Strategy
+
+- Static assets have long cache times
+- HTML is not cached (for updates)
+- Service Worker for offline support (optional)
+
+## Security
+
+### XSS Prevention
+
+Vue.js automatically escapes HTML in templates:
+
+```vue
+<!-- Safe: Automatically escaped -->
+<div>{{ userInput }}</div>
+
+<!-- Use v-html only for trusted content -->
+<div v-html="trustedHtml"></div>
+```
+
+### Form Security
+
+- CSRF tokens for sensitive operations
+- Input validation (client and server)
+- Honeypot fields for spam prevention
+
+### HTTPS
+
+All production deployments use HTTPS for secure communication.
+
+## Next Steps
+
+- [Learn about the design system](/architecture/design-system)
+- [Understand routing](/architecture/routing)
+- [Explore component architecture](/architecture/components)

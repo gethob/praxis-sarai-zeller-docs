@@ -1,0 +1,297 @@
+# Header Component
+
+The Header component provides the main navigation for the website with responsive mobile menu support.
+
+## Location
+
+`site/src/components/Navigation/Header.vue`
+
+## Features
+
+- Responsive design with mobile hamburger menu
+- Active route highlighting
+- Smooth transitions
+- Accessible navigation with ARIA labels
+- Emergency contact quick access
+
+## Props
+
+This component doesn't accept any props - it's a standalone navigation component.
+
+## Usage
+
+```vue
+<template>
+  <div id="app">
+    <Header />
+    <router-view />
+    <Footer />
+  </div>
+</template>
+
+<script setup>
+import Header from '@/components/Navigation/Header.vue'
+import Footer from '@/components/Navigation/Footer.vue'
+</script>
+```
+
+## Component Structure
+
+```vue
+<script setup>
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isMobileMenuOpen = ref(false)
+
+const navigationLinks = [
+  { name: 'Home', path: '/', label: 'Home' },
+  { name: 'Therapeutin', path: '/therapeutin', label: 'Therapeutin' },
+  { name: 'Therapien', path: '/therapien', label: 'Therapieangebote' },
+  { name: 'Facilities', path: '/praxis', label: 'Praxisräume' },
+  { name: 'Appointments', path: '/termine', label: 'Termine' },
+  { name: 'Contact', path: '/kontakt', label: 'Kontakt' },
+  { name: 'Emergency', path: '/notfall', label: 'Notfall', isEmergency: true }
+]
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false
+}
+</script>
+```
+
+## Responsive Behavior
+
+### Desktop (≥1024px)
+- Horizontal navigation bar
+- All links visible
+- Logo on the left
+- Emergency link highlighted on the right
+
+### Tablet (768px - 1023px)
+- Condensed horizontal navigation
+- Logo and key links visible
+- Some links may collapse
+
+### Mobile (<768px)
+- Hamburger menu icon
+- Slide-out navigation drawer
+- Full-screen menu overlay
+- Touch-friendly spacing
+
+## Styling
+
+### Desktop Navigation
+
+```css
+.header {
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-4) var(--spacing-6);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-link {
+  color: var(--color-text);
+  padding: var(--spacing-2) var(--spacing-4);
+  transition: color var(--transition-base);
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+}
+
+.nav-link.router-link-exact-active {
+  color: var(--color-primary);
+  font-weight: var(--font-semibold);
+}
+```
+
+### Mobile Menu
+
+```css
+.mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-2);
+}
+
+@media (max-width: 767px) {
+  .mobile-menu-button {
+    display: block;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 80%;
+  max-width: 300px;
+  height: 100vh;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-xl);
+  transform: translateX(100%);
+  transition: transform var(--transition-base);
+}
+
+.mobile-menu.open {
+  transform: translateX(0);
+}
+```
+
+## Accessibility
+
+### ARIA Labels
+
+```vue
+<button
+  class="mobile-menu-button"
+  @click="toggleMobileMenu"
+  aria-label="Toggle navigation menu"
+  :aria-expanded="isMobileMenuOpen"
+>
+  <span class="hamburger-icon"></span>
+</button>
+```
+
+### Keyboard Navigation
+
+- All links are focusable
+- Tab order follows visual flow
+- Enter/Space activates links
+- Escape closes mobile menu
+
+### Screen Reader Support
+
+```vue
+<nav aria-label="Main navigation">
+  <router-link
+    v-for="link in navigationLinks"
+    :key="link.name"
+    :to="link.path"
+    :aria-current="route.path === link.path ? 'page' : undefined"
+  >
+    {{ link.label }}
+  </router-link>
+</nav>
+```
+
+## Emergency Link
+
+The emergency link is visually distinct:
+
+```css
+.nav-link.emergency {
+  background-color: var(--color-error);
+  color: white;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-semibold);
+}
+
+.nav-link.emergency:hover {
+  background-color: #C53030; /* Darker red */
+}
+```
+
+## Mobile Menu Animation
+
+```css
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobile-menu.open {
+  animation: slideIn var(--transition-base);
+}
+```
+
+## Logo Section
+
+```vue
+<div class="logo">
+  <router-link to="/" @click="closeMobileMenu">
+    <h1>Praxis Sarai Zeller</h1>
+  </router-link>
+</div>
+```
+
+## Related Components
+
+- [Footer](/components/footer) - Footer navigation component
+- [Routing](/architecture/routing) - Vue Router configuration
+
+## Best Practices
+
+1. **Sticky Position**: Header stays visible during scroll for easy navigation
+2. **Active State**: Current route is visually highlighted
+3. **Touch Targets**: Mobile links have minimum 44px height for accessibility
+4. **Performance**: Menu state managed with simple ref, no complex state
+5. **Close on Navigate**: Mobile menu automatically closes after navigation
+
+## Customization
+
+### Changing Navigation Links
+
+Edit the `navigationLinks` array:
+
+```javascript
+const navigationLinks = [
+  {
+    name: 'Home',
+    path: '/',
+    label: 'Home'
+  },
+  // Add more links...
+]
+```
+
+### Adjusting Mobile Breakpoint
+
+Update the media query:
+
+```css
+@media (max-width: 767px) {
+  /* Mobile styles */
+}
+```
+
+## Testing
+
+### Visual Testing
+
+Test the header at different screen sizes:
+- Desktop: ≥1024px
+- Tablet: 768-1023px
+- Mobile: <768px
+
+### Interaction Testing
+
+- Click all navigation links
+- Test mobile menu open/close
+- Verify active route highlighting
+- Test keyboard navigation
+
+## Related Pages
+
+- [Component Architecture](/architecture/components)
+- [Design System](/architecture/design-system)
+- [Footer Component](/components/footer)

@@ -1,0 +1,397 @@
+# Footer Component
+
+The Footer component provides contact information, quick links, and legal information at the bottom of every page.
+
+## Location
+
+`site/src/components/Navigation/Footer.vue`
+
+## Features
+
+- Practice contact information
+- Quick navigation links
+- Social media links (if applicable)
+- Legal links (Impressum, Datenschutz)
+- Responsive multi-column layout
+- Copyright information
+
+## Props
+
+This component doesn't accept any props - it displays static footer content.
+
+## Usage
+
+```vue
+<template>
+  <div id="app">
+    <Header />
+    <router-view />
+    <Footer />
+  </div>
+</template>
+
+<script setup>
+import Header from '@/components/Navigation/Header.vue'
+import Footer from '@/components/Navigation/Footer.vue'
+</script>
+```
+
+## Component Structure
+
+```vue
+<script setup>
+const currentYear = new Date().getFullYear()
+
+const contactInfo = {
+  name: 'Praxis Sarai Zeller',
+  subtitle: 'Kinder- und Jugendlichenpsychotherapie',
+  address: 'Kanalstraße 2-12, 4. OG',
+  city: '91522 Ansbach',
+  phone: '0981 - 48749960',
+  fax: '0981 - 48749961',
+  email: 'kontakt@praxis-ansbach.de'
+}
+
+const quickLinks = [
+  { name: 'Home', path: '/' },
+  { name: 'Therapeutin', path: '/therapeutin' },
+  { name: 'Therapien', path: '/therapien' },
+  { name: 'Kontakt', path: '/kontakt' }
+]
+
+const legalLinks = [
+  { name: 'Impressum', path: '/impressum' },
+  { name: 'Datenschutz', path: '/datenschutz' }
+]
+</script>
+```
+
+## Layout
+
+### Desktop Layout (≥768px)
+
+```
+┌─────────────────────────────────────────────────┐
+│  Contact Info  │  Quick Links  │  Legal & Info  │
+└─────────────────────────────────────────────────┘
+           Copyright © 2025 Praxis Sarai Zeller
+```
+
+### Mobile Layout (<768px)
+
+```
+┌──────────────────┐
+│  Contact Info    │
+├──────────────────┤
+│  Quick Links     │
+├──────────────────┤
+│  Legal & Info    │
+└──────────────────┘
+   Copyright...
+```
+
+## Styling
+
+### Footer Container
+
+```css
+.footer {
+  background-color: var(--color-bg-alt);
+  border-top: 1px solid var(--color-border);
+  padding: var(--spacing-16) var(--spacing-6) var(--spacing-8);
+  margin-top: var(--spacing-20);
+}
+
+.footer-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-8);
+}
+```
+
+### Footer Sections
+
+```css
+.footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.footer-section h3 {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-3);
+}
+
+.footer-section p,
+.footer-section a {
+  color: var(--color-text-light);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+```
+
+### Links Styling
+
+```css
+.footer-link {
+  color: var(--color-text-light);
+  text-decoration: none;
+  transition: color var(--transition-base);
+  display: block;
+  padding: var(--spacing-1) 0;
+}
+
+.footer-link:hover {
+  color: var(--color-primary);
+}
+```
+
+### Copyright Section
+
+```css
+.footer-bottom {
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--spacing-8);
+  padding-top: var(--spacing-6);
+  text-align: center;
+}
+
+.copyright {
+  color: var(--color-text-light);
+  font-size: var(--text-sm);
+}
+```
+
+## Contact Information Section
+
+```vue
+<div class="footer-section">
+  <h3>Kontakt</h3>
+  <div class="contact-info">
+    <p class="practice-name">{{ contactInfo.name }}</p>
+    <p class="practice-subtitle">{{ contactInfo.subtitle }}</p>
+    <p class="address">
+      {{ contactInfo.address }}<br />
+      {{ contactInfo.city }}
+    </p>
+    <p class="phone">
+      <strong>Tel:</strong> {{ contactInfo.phone }}
+    </p>
+    <p class="fax">
+      <strong>Fax:</strong> {{ contactInfo.fax }}
+    </p>
+    <p class="email">
+      <a :href="`mailto:${contactInfo.email}`">
+        {{ contactInfo.email }}
+      </a>
+    </p>
+  </div>
+</div>
+```
+
+## Quick Links Section
+
+```vue
+<div class="footer-section">
+  <h3>Schnellzugriff</h3>
+  <nav aria-label="Footer navigation">
+    <router-link
+      v-for="link in quickLinks"
+      :key="link.path"
+      :to="link.path"
+      class="footer-link"
+    >
+      {{ link.name }}
+    </router-link>
+  </nav>
+</div>
+```
+
+## Legal Links Section
+
+```vue
+<div class="footer-section">
+  <h3>Rechtliches</h3>
+  <nav aria-label="Legal navigation">
+    <router-link
+      v-for="link in legalLinks"
+      :key="link.path"
+      :to="link.path"
+      class="footer-link"
+    >
+      {{ link.name }}
+    </router-link>
+  </nav>
+</div>
+```
+
+## Copyright
+
+```vue
+<div class="footer-bottom">
+  <p class="copyright">
+    © {{ currentYear }} Praxis Sarai Zeller. Alle Rechte vorbehalten.
+  </p>
+</div>
+```
+
+## Accessibility
+
+### Semantic HTML
+
+```vue
+<footer role="contentinfo" class="footer">
+  <div class="footer-content">
+    <!-- Footer sections -->
+  </div>
+</footer>
+```
+
+### ARIA Labels
+
+```vue
+<nav aria-label="Footer navigation">
+  <!-- Links -->
+</nav>
+
+<nav aria-label="Legal navigation">
+  <!-- Legal links -->
+</nav>
+```
+
+### Focus States
+
+```css
+.footer-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+```
+
+## Responsive Behavior
+
+### Desktop (≥768px)
+- Three-column grid layout
+- Equal width columns
+- Horizontal spacing between sections
+
+### Tablet (640px - 767px)
+- Two-column grid layout
+- Stacked layout for smaller sections
+
+### Mobile (<640px)
+- Single column layout
+- Full-width sections
+- Increased vertical spacing
+
+```css
+@media (max-width: 767px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-12);
+  }
+}
+```
+
+## Email Link
+
+```vue
+<a
+  :href="`mailto:${contactInfo.email}`"
+  class="footer-link email-link"
+  aria-label="Send email to practice"
+>
+  {{ contactInfo.email }}
+</a>
+```
+
+## Phone Link (Mobile)
+
+For mobile devices, make phone numbers clickable:
+
+```vue
+<a
+  :href="`tel:${contactInfo.phone.replace(/\s/g, '')}`"
+  class="footer-link phone-link"
+>
+  {{ contactInfo.phone }}
+</a>
+```
+
+## Customization
+
+### Adding Social Media Links
+
+```vue
+<script setup>
+const socialLinks = [
+  { name: 'Facebook', url: 'https://facebook.com/...', icon: 'facebook' },
+  { name: 'Instagram', url: 'https://instagram.com/...', icon: 'instagram' }
+]
+</script>
+
+<template>
+  <div class="footer-section">
+    <h3>Folgen Sie uns</h3>
+    <div class="social-links">
+      <a
+        v-for="social in socialLinks"
+        :key="social.name"
+        :href="social.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="`Visit our ${social.name} page`"
+      >
+        {{ social.name }}
+      </a>
+    </div>
+  </div>
+</template>
+```
+
+### Adding Opening Hours
+
+```vue
+<div class="footer-section">
+  <h3>Sprechzeiten</h3>
+  <p>Montag - Freitag<br />9:00 - 18:00 Uhr</p>
+  <p class="note">Termine nach Vereinbarung</p>
+</div>
+```
+
+## Related Components
+
+- [Header](/components/header) - Header navigation component
+- [Contact Form](/components/contact-form) - Contact form component
+
+## Best Practices
+
+1. **Keep It Simple**: Footer should be informative but not overwhelming
+2. **Mobile-Friendly**: Ensure all links are easily tappable on mobile
+3. **Updated Copyright**: Use `currentYear` to keep copyright date current
+4. **Legal Compliance**: Always include Impressum and Datenschutz for German websites
+5. **Contact Access**: Make contact information easily accessible
+
+## Testing
+
+### Visual Testing
+- Test footer at different screen sizes
+- Verify all links are visible and readable
+- Check spacing and alignment
+
+### Functional Testing
+- Click all navigation links
+- Test email and phone links
+- Verify external links open in new tab
+
+## Related Pages
+
+- [Component Architecture](/architecture/components)
+- [Design System](/architecture/design-system)
+- [Header Component](/components/header)

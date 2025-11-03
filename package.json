@@ -1,0 +1,21 @@
+{
+  "name": "praxis-sarai-zeller-docs",
+  "version": "1.0.0",
+  "description": "Documentation for Praxis Sarai Zeller website",
+  "scripts": {
+    "dev": "next dev -p 8234",
+    "build": "next build",
+    "start": "next start",
+    "export": "next build && next export"
+  },
+  "keywords": ["nextra", "documentation", "vue", "psychotherapy"],
+  "author": "Praxis Sarai Zeller",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^14.2.33",
+    "nextra": "^3.3.1",
+    "nextra-theme-docs": "^3.3.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

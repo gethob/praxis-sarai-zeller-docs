@@ -1,0 +1,516 @@
+# Build Optimization
+
+Optimize your production builds for better performance, smaller bundle sizes, and faster load times.
+
+## Site Build Optimization
+
+### Current Configuration
+
+The site is already configured with several optimizations in `site/vite.config.js`:
+
+```javascript
+export default defineConfig({
+  build: {
+    outDir: 'dist',
+    target: 'esnext',
+    minify: 'terser',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router']
+        }
+      }
+    }
+  }
+})
+```
+
+### Code Splitting
+
+#### Route-Based Splitting
+
+Already implemented via lazy loading in `site/src/router/index.js`:
+
+```javascript
+const routes = [
+  {
+    path: '/',
+    component: () => import('@/views/Home.vue') // Lazy loaded
+  }
+]
+```
+
+#### Manual Chunk Splitting
+
+Separate vendor dependencies:
+
+```javascript
+// vite.config.js
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router'],
+          'utils': ['./src/utils/helpers.js', './src/utils/validation.js']
+        }
+      }
+    }
+  }
+})
+```
+
+### CSS Optimization
+
+#### CSS Code Splitting
+
+Enable per-route CSS splitting:
+
+```javascript
+export default defineConfig({
+  build: {
+    cssCodeSplit: true // Already enabled
+  }
+})
+```
+
+#### Remove Unused CSS
+
+Install and configure PurgeCSS:
+
+```bash
+npm install -D @fullhuman/postcss-purgecss
+```
+
+```javascript
+// postcss.config.js
+import purgecss from '@fullhuman/postcss-purgecss'
+
+export default {
+  plugins: [
+    purgecss({
+      content: ['./index.html', './src/**/*.{vue,js}'],
+      safelist: ['router-link-active', 'router-link-exact-active']
+    })
+  ]
+}
+```
+
+### Image Optimization
+
+#### WebP Format
+
+Convert images to WebP:
+
+```bash
+# Install imagemin
+npm install -D imagemin imagemin-webp
+
+# Convert images
+node convert-images.js
+```
+
+```javascript
+// convert-images.js
+import imagemin from 'imagemin'
+import imageminWebp from 'imagemin-webp'
+
+await imagemin(['public/images/*.{jpg,png}'], {
+  destination: 'public/images/webp',
+  plugins: [imageminWebp({ quality: 80 })]
+})
+```
+
+#### Lazy Loading
+
+Use native lazy loading:
+
+```vue
+<img
+  src="/images/photo.jpg"
+  alt="Description"
+  loading="lazy"
+/>
+```
+
+#### Responsive Images
+
+Provide multiple sizes:
+
+```vue
+<img
+  srcset="
+    /images/photo-320w.jpg 320w,
+    /images/photo-640w.jpg 640w,
+    /images/photo-1280w.jpg 1280w
+  "
+  sizes="(max-width: 640px) 320px, (max-width: 1280px) 640px, 1280px"
+  src="/images/photo-640w.jpg"
+  alt="Description"
+  loading="lazy"
+/>
+```
+
+### Bundle Analysis
+
+Analyze your bundle size:
+
+```bash
+# Install rollup plugin
+npm install -D rollup-plugin-visualizer
+
+# Update vite.config.js
+import { visualizer } from 'rollup-plugin-visualizer'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    visualizer({
+      open: true,
+      gzipSize: true,
+      brotliSize: true
+    })
+  ]
+})
+
+# Build and view report
+npm run build
+```
+
+### Tree Shaking
+
+Ensure proper tree shaking:
+
+```javascript
+// ✅ Good - imports only what's needed
+import { ref, computed } from 'vue'
+
+// ❌ Avoid - imports everything
+import * as Vue from 'vue'
+```
+
+### Compression
+
+#### Gzip Compression
+
+Enable Gzip in build:
+
+```bash
+npm install -D vite-plugin-compression
+```
+
+```javascript
+// vite.config.js
+import viteCompression from 'vite-plugin-compression'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz'
+    })
+  ]
+})
+```
+
+#### Brotli Compression
+
+Better compression than Gzip:
+
+```javascript
+viteCompression({
+  algorithm: 'brotliCompress',
+  ext: '.br'
+})
+```
+
+## Docs Build Optimization
+
+### Next.js Configuration
+
+Current optimization in `docs/next.config.mjs`:
+
+```javascript
+export default withNextra({
+  output: 'export', // Static export for better performance
+  images: {
+    unoptimized: true // Required for static export
+  }
+})
+```
+
+### Image Optimization
+
+For docs with many images, consider:
+
+```javascript
+// next.config.mjs
+export default withNextra({
+  images: {
+    formats: ['image/webp'],
+    deviceSizes: [640, 768, 1024, 1280],
+    imageSizes: [16, 32, 48, 64, 96]
+  }
+})
+```
+
+### Font Optimization
+
+Use Next.js built-in font optimization:
+
+```javascript
+// pages/_app.jsx
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export default function App({ Component, pageProps }) {
+  return (
+    <div className={inter.className}>
+      <Component {...pageProps} />
+    </div>
+  )
+}
+```
+
+## Performance Metrics
+
+### Measure Performance
+
+```bash
+# Install Lighthouse CLI
+npm install -g lighthouse
+
+# Run audit
+lighthouse https://praxis-ansbach.de --view
+```
+
+### Key Metrics to Track
+
+- **FCP (First Contentful Paint)**: < 1.8s
+- **LCP (Largest Contentful Paint)**: < 2.5s
+- **FID (First Input Delay)**: < 100ms
+- **CLS (Cumulative Layout Shift)**: < 0.1
+- **TTI (Time to Interactive)**: < 3.8s
+
+## Caching Strategies
+
+### Browser Caching
+
+Configure cache headers:
+
+```javascript
+// For GitHub Pages, add in public folder
+// public/_headers
+/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+```
+
+### Service Worker
+
+Add PWA capabilities:
+
+```bash
+npm install -D vite-plugin-pwa
+```
+
+```javascript
+// vite.config.js
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+      }
+    })
+  ]
+})
+```
+
+## CDN Integration
+
+### Using Cloudflare
+
+1. Add your domain to Cloudflare
+2. Update nameservers
+3. Enable "Auto Minify" for HTML, CSS, JS
+4. Enable "Brotli" compression
+5. Configure cache rules
+
+### Using jsDelivr for Assets
+
+Load common libraries from CDN:
+
+```html
+<!-- Load Vue from CDN for caching benefits -->
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+```
+
+## Build Scripts
+
+### Optimized Build Script
+
+Add to `package.json`:
+
+```json
+{
+  "scripts": {
+    "build": "vite build",
+    "build:analyze": "vite build && open stats.html",
+    "build:preview": "vite build && vite preview",
+    "build:prod": "NODE_ENV=production vite build"
+  }
+}
+```
+
+### Pre-build Optimization
+
+```bash
+# Clean before build
+rm -rf dist
+
+# Build with analysis
+npm run build:analyze
+
+# Test production build
+npm run build:preview
+```
+
+## Environment-Specific Optimization
+
+### Production Environment
+
+```javascript
+// .env.production
+VITE_API_URL=https://api.praxis-ansbach.de
+VITE_ENABLE_ANALYTICS=true
+```
+
+### Development Environment
+
+```javascript
+// .env.development
+VITE_API_URL=http://localhost:3000
+VITE_ENABLE_ANALYTICS=false
+```
+
+## Critical CSS
+
+Extract and inline critical CSS:
+
+```bash
+npm install -D critters
+```
+
+```javascript
+// vite.config.js
+import { critters } from 'vite-plugin-critters'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    critters()
+  ]
+})
+```
+
+## Lighthouse Optimization Checklist
+
+### Performance
+- [x] Enable code splitting
+- [x] Lazy load routes
+- [x] Compress assets (Gzip/Brotli)
+- [ ] Add service worker
+- [x] Optimize images
+- [ ] Use CDN for assets
+- [x] Minify CSS/JS
+
+### Accessibility
+- [x] Proper HTML semantics
+- [x] ARIA labels
+- [x] Color contrast
+- [x] Keyboard navigation
+- [x] Alt text for images
+
+### Best Practices
+- [x] HTTPS enabled
+- [ ] HTTP/2 enabled
+- [x] No console errors
+- [x] Secure headers
+- [ ] Content Security Policy
+
+### SEO
+- [x] Meta descriptions
+- [x] Title tags
+- [ ] Sitemap.xml
+- [ ] robots.txt
+- [x] Structured data
+
+## Monitoring
+
+### Performance Monitoring
+
+Set up monitoring services:
+
+- **Google Analytics**: Track user behavior
+- **Sentry**: Error tracking
+- **UptimeRobot**: Uptime monitoring
+- **Cloudflare Analytics**: Traffic insights
+
+## Bundle Size Budgets
+
+Set size budgets in `vite.config.js`:
+
+```javascript
+export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 500, // 500KB
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('vue')) {
+              return 'vue-vendor'
+            }
+            return 'vendor'
+          }
+        }
+      }
+    }
+  }
+})
+```
+
+## Best Practices Summary
+
+1. **Code Splitting**: Split code by routes and vendors
+2. **Lazy Loading**: Load components and images on demand
+3. **Compression**: Enable Gzip/Brotli compression
+4. **Caching**: Configure proper cache headers
+5. **Images**: Optimize and lazy load images
+6. **Fonts**: Use system fonts or optimized web fonts
+7. **CSS**: Remove unused CSS, enable code splitting
+8. **Bundle**: Analyze and optimize bundle size
+9. **Monitoring**: Track performance metrics
+10. **Testing**: Test on real devices and slow connections
+
+## Related Pages
+
+- [GitHub Pages Deployment](/deployment/github-pages)
+- [Custom Domain Setup](/deployment/custom-domain)
+- [Configuration](/getting-started/configuration)

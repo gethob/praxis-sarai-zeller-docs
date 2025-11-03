@@ -1,0 +1,335 @@
+# Custom Domain Setup
+
+Configure a custom domain for your deployed applications.
+
+## Overview
+
+Both the site and docs can be deployed to custom domains. This guide covers setup for different hosting providers.
+
+## Site Custom Domain
+
+### Using GitHub Pages with Custom Domain
+
+#### 1. Add CNAME File
+
+Create a `CNAME` file in the `site/public/` directory:
+
+```bash
+echo "praxis-ansbach.de" > site/public/CNAME
+```
+
+#### 2. Configure DNS
+
+Add DNS records with your domain provider:
+
+**For apex domain (praxis-ansbach.de):**
+
+```
+Type    Name    Value
+A       @       185.199.108.153
+A       @       185.199.109.153
+A       @       185.199.110.153
+A       @       185.199.111.153
+```
+
+**For www subdomain:**
+
+```
+Type    Name    Value
+CNAME   www     your-username.github.io
+```
+
+#### 3. Update Vite Configuration
+
+Update `site/vite.config.js`:
+
+```javascript
+export default defineConfig({
+  base: '/', // Change from '/repo-name/' to '/' for custom domain
+  // ... rest of config
+})
+```
+
+#### 4. Enable in GitHub Settings
+
+1. Go to your repository on GitHub
+2. Navigate to **Settings** → **Pages**
+3. Under "Custom domain", enter: `praxis-ansbach.de`
+4. Check "Enforce HTTPS" (after DNS propagates)
+5. Save
+
+#### 5. Wait for DNS Propagation
+
+DNS changes can take 24-48 hours to propagate globally. Check status:
+
+```bash
+# Check if DNS is resolving
+dig praxis-ansbach.de
+
+# Check HTTPS certificate
+curl -I https://praxis-ansbach.de
+```
+
+## Docs Custom Domain
+
+Since docs is deployed independently, you have several options:
+
+### Option 1: Subdomain on Same GitHub Pages
+
+**Domain**: `docs.praxis-ansbach.de`
+
+1. Create CNAME record:
+```
+Type    Name    Value
+CNAME   docs    your-username.github.io
+```
+
+2. This requires separate repository for docs with its own CNAME file
+
+### Option 2: Deploy Docs to Vercel
+
+**Domain**: `docs.praxis-ansbach.de`
+
+#### Vercel Setup
+
+1. **Install Vercel CLI:**
+```bash
+npm install -g vercel
+```
+
+2. **Deploy docs:**
+```bash
+cd docs
+vercel --prod
+```
+
+3. **Add Custom Domain in Vercel:**
+   - Go to Vercel dashboard
+   - Select your project
+   - Go to Settings → Domains
+   - Add `docs.praxis-ansbach.de`
+
+4. **Configure DNS:**
+```
+Type    Name    Value
+CNAME   docs    cname.vercel-dns.com
+```
+
+### Option 3: Deploy Docs to Netlify
+
+**Domain**: `docs.praxis-ansbach.de`
+
+#### Netlify Setup
+
+1. **Create `netlify.toml` in docs directory:**
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+```
+
+2. **Deploy:**
+   - Connect repository to Netlify
+   - Set build command: `npm run build`
+   - Set publish directory: `out`
+   - Deploy
+
+3. **Add Custom Domain in Netlify:**
+   - Go to Domain settings
+   - Add custom domain: `docs.praxis-ansbach.de`
+
+4. **Configure DNS:**
+```
+Type    Name    Value
+CNAME   docs    your-site.netlify.app
+```
+
+## DNS Configuration Details
+
+### DNS Record Types
+
+- **A Record**: Points domain to IP address (for apex domains)
+- **CNAME Record**: Points domain to another domain (for subdomains)
+- **ALIAS/ANAME**: Like CNAME but for apex domains (provider-specific)
+
+### Common DNS Providers
+
+#### Cloudflare
+
+1. Log in to Cloudflare
+2. Select your domain
+3. Go to DNS management
+4. Add records as specified above
+5. Ensure "Proxy status" is set to "DNS only" (gray cloud) initially
+
+#### Namecheap
+
+1. Log in to Namecheap
+2. Select domain → Manage
+3. Advanced DNS tab
+4. Add new records
+5. Save changes
+
+#### GoDaddy
+
+1. Log in to GoDaddy
+2. My Products → DNS
+3. Add records
+4. Save changes
+
+## SSL/TLS Certificates
+
+### GitHub Pages
+
+GitHub Pages automatically provides free SSL certificates via Let's Encrypt:
+- Enable "Enforce HTTPS" in repository settings
+- Wait for certificate provisioning (can take up to 24 hours)
+- Certificate automatically renews
+
+### Vercel
+
+Vercel automatically provides SSL:
+- Free SSL certificates via Let's Encrypt
+- Automatic renewal
+- Instant provisioning
+
+### Netlify
+
+Netlify automatically provides SSL:
+- Free SSL certificates via Let's Encrypt
+- Automatic renewal
+- One-click HTTPS
+
+## Verification
+
+### Check DNS Resolution
+
+```bash
+# Check A records
+dig praxis-ansbach.de
+
+# Check CNAME records
+dig docs.praxis-ansbach.de
+
+# Check from different DNS servers
+dig @8.8.8.8 praxis-ansbach.de
+dig @1.1.1.1 praxis-ansbach.de
+```
+
+### Check HTTPS
+
+```bash
+# Test HTTPS connection
+curl -I https://praxis-ansbach.de
+
+# Test SSL certificate
+openssl s_client -connect praxis-ansbach.de:443 -servername praxis-ansbach.de
+```
+
+### Online Tools
+
+- **DNS Checker**: https://dnschecker.org
+- **SSL Checker**: https://www.sslshopper.com/ssl-checker.html
+- **What's My DNS**: https://whatsmydns.net
+
+## Troubleshooting
+
+### Issue: DNS Not Resolving
+
+**Problem**: Domain doesn't point to correct server
+
+**Solutions**:
+1. Wait 24-48 hours for DNS propagation
+2. Clear DNS cache: `sudo dscacheutil -flushcache` (macOS)
+3. Try different DNS server (8.8.8.8 or 1.1.1.1)
+4. Verify records in DNS provider dashboard
+
+### Issue: SSL Certificate Error
+
+**Problem**: Browser shows security warning
+
+**Solutions**:
+1. Wait for certificate provisioning (up to 24 hours)
+2. Ensure "Enforce HTTPS" is enabled
+3. Check DNS is pointing to correct location
+4. Try hard refresh: Cmd+Shift+R (macOS) or Ctrl+Shift+R (Windows)
+
+### Issue: GitHub Pages Not Working with Custom Domain
+
+**Problem**: Site shows 404 with custom domain
+
+**Solutions**:
+1. Verify CNAME file exists in `site/public/`
+2. Check `base` in vite.config.js is set to `/`
+3. Rebuild and redeploy
+4. Verify DNS records are correct
+5. Wait for DNS propagation
+
+### Issue: Mixed Content Warnings
+
+**Problem**: Some resources load over HTTP instead of HTTPS
+
+**Solutions**:
+1. Update all URLs to use HTTPS
+2. Use protocol-relative URLs: `//example.com/resource`
+3. Update vite.config.js base URL to use HTTPS
+4. Check external resources (fonts, images) use HTTPS
+
+## Email Configuration
+
+If you want email on your custom domain:
+
+### Simple Email Forwarding
+
+Many providers offer free email forwarding:
+
+**Cloudflare Email Routing:**
+```
+1. Go to Cloudflare dashboard
+2. Email → Email Routing
+3. Add destination email
+4. Add forwarding rules
+```
+
+**ImprovMX (Free):**
+```
+1. Go to improvmx.com
+2. Add your domain
+3. Configure MX records:
+   MX 10 mx1.improvmx.com
+   MX 20 mx2.improvmx.com
+```
+
+## Best Practices
+
+1. **Always use HTTPS**: Enable SSL certificates for security
+2. **WWW vs Non-WWW**: Choose one and redirect the other
+3. **DNS TTL**: Set appropriate TTL values (start with 300 for testing)
+4. **Monitoring**: Set up uptime monitoring (e.g., UptimeRobot)
+5. **Backup**: Keep old DNS settings documented before changes
+
+## Cost Considerations
+
+### Free Options
+- GitHub Pages: Free for public repositories
+- Vercel: Free tier for personal projects
+- Netlify: Free tier for personal projects
+- Cloudflare DNS: Free
+- SSL Certificates: Free via Let's Encrypt
+
+### Paid Options
+- Domain registration: ~$10-15/year
+- Premium DNS providers: $5-50/month
+- CDN services: Varies based on usage
+
+## Related Pages
+
+- [GitHub Pages Deployment](/deployment/github-pages)
+- [Build Optimization](/deployment/build-optimization)
+- [Configuration](/getting-started/configuration)
